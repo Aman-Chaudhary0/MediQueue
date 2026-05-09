@@ -42,21 +42,21 @@ const QueueManagement = () => {
 
     function DetailRow({ label, value }) {
         return (
-            <div className="flex justify-between  pb-1">
+            <div className="flex flex-col gap-1 pb-1 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                 <span className="text-gray-500 text-sm">{label}</span>
-                <span className="font-medium text-gray-800">{value}</span>
+                <span className="font-medium text-gray-800 sm:text-right">{value}</span>
             </div>
         );
     }
 
     return (
-        <div className='p-6 m-2'>
+        <div className='mx-auto max-w-7xl p-4 sm:p-6'>
 
             {/* ================================ TITLE ================== */}
-            <div className='flex items-center justify-between mb-8'>
-                <h1 className='text-2xl font-bold'>Queue Management</h1>
+            <div className='mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+                <h1 className='text-2xl sm:text-3xl font-bold'>Queue Management</h1>
 
-                <button className='flex text-blue-600 px-2 rounded hover:bg-blue-600 hover:text-white transition duration-300 border-2 text-sm border-blue-600 font-semibold items-center'>
+                <button className='flex w-full items-center justify-center rounded border-2 border-blue-600 px-3 py-2 text-sm font-semibold text-blue-600 transition duration-300 hover:bg-blue-600 hover:text-white sm:w-auto'>
                     <RefreshCcw className="w-5 h-5 m-2" />
                     <span>Refresh Queue</span>
                 </button>
@@ -64,35 +64,35 @@ const QueueManagement = () => {
 
             {/* ============================ APPOINTMENTS INFO ============================= */}
 
-            <div className='w-full mx-auto px-4 py-15'>
-                <div className='flex items-center space-x-8'>
-                    <div className='flex border border-blue-300 items-center space-y-2 w-full bg-blue-50 rounded-2xl p-8'>
-                        <Users className='text-blue-900 bg-blue-200 rounded-full h-12 w-12 m-2 p-1' />
-                        <div className='ml-2'>
+            <div className='w-full py-8 sm:py-10'>
+                <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+                    <div className='flex w-full items-center gap-4 rounded-2xl border border-blue-300 bg-blue-50 p-5 sm:p-6'>
+                        <Users className='h-12 w-12 shrink-0 rounded-full bg-blue-200 p-1 text-blue-900' />
+                        <div className='min-w-0'>
                             <p className='text-xs font-semibold text-gray-600'>Total Appointments</p>
                             <p className='text-2xl font-bold'>24</p>
                         </div>
                     </div>
 
-                    <div className='flex w-full items-center border border-green-300 space-y-2 bg-green-50 rounded-2xl p-8'>
-                        <CircleCheck className='text-green-900 bg-green-200 rounded-full h-12 w-12 m-2 p-1' />
-                        <div>
+                    <div className='flex w-full items-center gap-4 rounded-2xl border border-green-300 bg-green-50 p-5 sm:p-6'>
+                        <CircleCheck className='h-12 w-12 shrink-0 rounded-full bg-green-200 p-1 text-green-900' />
+                        <div className='min-w-0'>
                             <p className='text-xs font-semibold text-gray-600'>Completed</p>
                             <p className='text-2xl font-bold'>12</p>
                         </div>
                     </div>
 
-                    <div className='flex w-full items-center border border-orange-300 space-y-2 bg-orange-50 rounded-2xl p-8'>
-                        <Clock className='text-orange-900 bg-orange-200 rounded-full h-12 w-12 m-2 p-1' />
-                        <div>
+                    <div className='flex w-full items-center gap-4 rounded-2xl border border-orange-300 bg-orange-50 p-5 sm:p-6'>
+                        <Clock className='h-12 w-12 shrink-0 rounded-full bg-orange-200 p-1 text-orange-900' />
+                        <div className='min-w-0'>
                             <p className='text-xs font-semibold text-gray-600'>In Progress</p>
                             <p className='text-2xl font-bold'>1</p>
                         </div>
                     </div>
 
-                    <div className='flex w-full items-center border border-violet-300 space-y-2 bg-violet-50 rounded-2xl p-8'>
-                        <ClipboardCheck className='text-violet-900 bg-violet-200 rounded-full h-12 w-12 m-2 p-1' />
-                        <div>
+                    <div className='flex w-full items-center gap-4 rounded-2xl border border-violet-300 bg-violet-50 p-5 sm:p-6'>
+                        <ClipboardCheck className='h-12 w-12 shrink-0 rounded-full bg-violet-200 p-1 text-violet-900' />
+                        <div className='min-w-0'>
                             <p className='text-xs font-semibold text-gray-600'>Pending</p>
                             <p className='text-2xl font-bold'>11</p>
                         </div>
@@ -108,17 +108,17 @@ const QueueManagement = () => {
                     {/* Heading */}
                     <h2 className="text-blue-600 font-semibold mb-4">CURRENT PATIENT</h2>
 
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
 
                         {/* Token Section */}
-                        <div className="text-center">
+                        <div className="text-center lg:min-w-45">
                             <p className="text-gray-500 text-sm">TOKEN NO.</p>
-                            <h1 className="text-5xl font-bold text-green-600">{patient.token}</h1>
+                            <h1 className="text-4xl sm:text-5xl font-bold text-green-600">{patient.token}</h1>
                             <p className="text-green-600 text-sm mt-1">In Consultation</p>
                         </div>
 
                         {/* Avatar + Info */}
-                        <div className="flex items-center gap-4 flex-1">
+                        <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-start sm:text-left lg:flex-1">
 
                             {/* Avatar */}
                             <img
@@ -128,23 +128,23 @@ const QueueManagement = () => {
                             />
 
                             {/* Details */}
-                            <div>
+                            <div className="min-w-0">
                                 <h3 className="text-xl font-semibold">{patient.name}</h3>
                                 <p className="text-gray-500 text-sm">
                                     {patient.age} yrs, {patient.gender}
                                 </p>
 
-                                <div className="flex items-center gap-2 text-sm mt-1 text-gray-600">
+                                <div className="mt-1 flex items-center justify-center gap-2 text-sm text-gray-600 sm:justify-start">
                                     <Phone size={16} />
                                     {patient.phone}
                                 </div>
 
-                                <div className="flex items-center gap-2 text-sm mt-1 text-gray-600">
+                                <div className="mt-1 flex items-center justify-center gap-2 text-sm text-gray-600 sm:justify-start">
                                     <Calendar size={16} />
                                     {patient.type}
                                 </div>
 
-                                <div className="flex items-center gap-2 text-sm mt-1 text-gray-600">
+                                <div className="mt-1 flex items-center justify-center gap-2 text-sm text-gray-600 sm:justify-start">
                                     <Clock size={16} />
                                     {patient.time} • {patient.date}
                                 </div>
@@ -155,17 +155,17 @@ const QueueManagement = () => {
                     {/* Buttons */}
                     <div className="flex flex-wrap gap-4 mt-6">
 
-                        <button className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700">
+                        <button className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 sm:w-auto">
                             <CheckCircle size={18} />
                             Mark as Completed
                         </button>
 
-                        <button className="flex items-center gap-2 border border-yellow-500 text-yellow-600 px-4 py-2 rounded-lg hover:bg-yellow-50">
+                        <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-yellow-500 px-4 py-2 text-yellow-600 hover:bg-yellow-50 sm:w-auto">
                             <FastForward size={18} />
                             Next Patient (A11)
                         </button>
 
-                        <button className="flex items-center gap-2 border border-red-500 text-red-600 px-4 py-2 rounded-lg hover:bg-red-50">
+                        <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-500 px-4 py-2 text-red-600 hover:bg-red-50 sm:w-auto">
                             <SkipForward size={18} />
                             Skip Patient
                         </button>
@@ -215,22 +215,22 @@ const QueueManagement = () => {
             <div className="bg-white shadow-lg rounded-2xl p-6 w-full">
 
                 {/* Header */}
-                <div className="flex justify-between items-center mb-4">
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <h2 className="text-blue-600 font-semibold">UPCOMING QUEUE</h2>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                         <span className="text-gray-500 text-sm flex items-center gap-1">
                             <Users size={16} /> {patients.length} Patients Waiting
                         </span>
 
-                        <button className="flex items-center gap-1 text-blue-600 border px-3 py-1 rounded-lg hover:bg-blue-50">
+                        <button className="flex w-full items-center justify-center gap-1 rounded-lg border px-3 py-2 text-blue-600 hover:bg-blue-50 sm:w-auto sm:py-1">
                             <RefreshCw size={16} /> Refresh
                         </button>
                     </div>
                 </div>
 
                 {/* Table Header */}
-                <div className="grid grid-cols-4 text-gray-500 text-sm font-medium pb-2">
+                <div className="hidden grid-cols-4 pb-2 text-sm font-medium text-gray-500 md:grid">
                     <span>Token No.</span>
                     <span>Patient Name</span>
                     <span>Time</span>
@@ -242,14 +242,18 @@ const QueueManagement = () => {
                     {patients.map((p, index) => (
                         <div
                             key={index}
-                            className={`grid grid-cols-4 items-center p-3 rounded-lg ${p.status === "Next" ? "bg-yellow-50" : "hover:bg-gray-50"
+                            className={`rounded-lg p-4 md:grid md:grid-cols-4 md:items-center md:p-3 ${p.status === "Next" ? "bg-yellow-50" : "bg-gray-50 md:hover:bg-gray-50"
                                 }`}
                         >
                             {/* Token */}
-                            <span className="text-blue-600 font-semibold">{p.token}</span>
+                            <div className="mb-3 md:mb-0">
+                                <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 md:hidden">Token No.</span>
+                                <span className="font-semibold text-blue-600">{p.token}</span>
+                            </div>
 
                             {/* Name + Age */}
-                            <div>
+                            <div className="mb-3 md:mb-0">
+                                <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 md:hidden">Patient Name</span>
                                 <p className="font-medium">{p.name}</p>
                                 <p className="text-xs text-gray-500">
                                     {p.age} yrs, {p.gender}
@@ -257,17 +261,23 @@ const QueueManagement = () => {
                             </div>
 
                             {/* Time */}
-                            <span className="text-gray-700">{p.time}</span>
+                            <div className="mb-3 md:mb-0">
+                                <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 md:hidden">Time</span>
+                                <span className="text-gray-700">{p.time}</span>
+                            </div>
 
                             {/* Status */}
-                            <span
-                                className={`text-sm px-2 py-1 rounded-full w-fit ${p.status === "Next"
-                                    ? "bg-yellow-200 text-yellow-800"
-                                    : "bg-blue-100 text-blue-600"
-                                    }`}
-                            >
-                                {p.status}
-                            </span>
+                            <div>
+                                <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 md:hidden">Status</span>
+                                <span
+                                    className={`inline-flex w-fit rounded-full px-2 py-1 text-sm ${p.status === "Next"
+                                        ? "bg-yellow-200 text-yellow-800"
+                                        : "bg-blue-100 text-blue-600"
+                                        }`}
+                                >
+                                    {p.status}
+                                </span>
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -283,10 +293,10 @@ const QueueManagement = () => {
             </div>
 
             {/* ============================= tips + queue settings ============================= */}
-            <div className="w-full bg-blue-50 border border-blue-100 rounded-xl px-6 py-4 flex items-center justify-between mt-6">
+            <div className="mt-6 flex w-full flex-col gap-4 rounded-xl border border-blue-100 bg-blue-50 px-4 py-4 sm:px-6">
 
                 {/* Left Side - Tips */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-start gap-3">
                     <div className="bg-blue-100 p-2 rounded-full">
                         <Info className="text-blue-600 w-5 h-5" />
                     </div>
@@ -296,11 +306,6 @@ const QueueManagement = () => {
                     </p>
                 </div>
 
-                {/* Right Side - Button */}
-                <button className="flex items-center gap-2 border border-blue-200 px-4 py-2 rounded-lg text-blue-600 hover:bg-blue-100 transition">
-                    <Settings className="w-4 h-4" />
-                    Queue Settings
-                </button>
             </div>
 
 
