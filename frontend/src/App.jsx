@@ -16,28 +16,42 @@ import PatientProfile from './pages/patient/PatientProfile'
 import AppointmentDetails from './pages/patient/AppointmentDetails'
 import Analytics from './pages/admin/Analytics'
 import AdminProfile from './pages/admin/AdminProfile'
-import DoctorSelection from './components/patientComponents/DoctorSelection'
+import { Route, Routes } from 'react-router-dom'
 
 const App = () => {
   return (
     <div>
-      {/* <Home /> */}
-      {/* <Login /> */}
-      {/* <Register /> */}
-      {/* <BookAppointment  /> // doctor selection component wrong */}
-      {/* <Dashboard />    */}
-      {/* <LiveQueue /> */}
-      {/* <AppointmentHistory />   */}
-      {/* <DoctorDashboard />     */}
-      {/* <QueueManagement /> */}
-      {/* <AdminDashboard />  */}
-      {/* <ManageDoctors />  */}
-      {/* <ContactUs /> */}
-      {/* <DoctorProfile /> */}
-      {/* <PatientProfile /> */}
-      {/* <AppointmentDetails /> */}
-      {/* <Analytics /> */}
-      {/* <AdminProfile /> */}
+      <Routes>
+
+        {/* Public Routes  */}
+        <Route path="/" element={<Home />} />
+        <Route path='/contact-us' element={<ContactUs />} />
+
+        {/* Auth Routes */}
+        <Route path='/login' element={<Login />} />
+        <Route path='/register' element={<Register />} />
+
+        {/* patient Routes */}
+        <Route path='/patient/dashboard' element={<Dashboard />} />
+        <Route path='/patient/book-appointment' element={<BookAppointment />} />
+        <Route path='/patient/appointment-history' element={<AppointmentHistory />} />
+        <Route path='/patient/live-queue' element={<LiveQueue />} />
+        <Route path='/patient/appointment' element={<AppointmentDetails />} />
+        <Route path='/patient/profile' element={<PatientProfile />} />
+
+        {/* Doctor Routes */}
+        <Route path='/doctor/dashboard' element={<DoctorDashboard />} />
+        <Route path='/doctor/queue-management' element={<QueueManagement />} />
+        <Route path='/doctor/profile' element={<DoctorProfile />} />
+
+        {/* admin rouutes */}
+        <Route path='/admin/dashboard' element={<AdminDashboard />} />
+        <Route path='/admin/manage-doctors' element={<ManageDoctors />} />
+        <Route path='/admin/analytics' element={<Analytics />} />
+        <Route path='/admin/profile' element={<AdminProfile />} />
+
+
+      </Routes>
 
     </div>
   )
