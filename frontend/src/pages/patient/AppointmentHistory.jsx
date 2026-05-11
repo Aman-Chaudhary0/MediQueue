@@ -3,7 +3,41 @@ import React from 'react'
 import RecentAppointments from '../../components/patientComponents/RecentAppointments'
 import FilterNavbar from '../../components/patientComponents/FilterNavbar'
 
-
+const appointments = [
+    {
+        id: 1,
+        doctorName: "Dr. Amit Sharma",
+        hospital: "City Care Hospital",
+        specialization: "Cardiologist",
+        date: "14 May 2026 ",
+        time: "11:15 AM",
+        token: "A12",
+        status: "Completed",
+        photo: "https://randomuser.me/api/portraits/men/32.jpg",
+    },
+    {
+        id: 2,
+        doctorName: "Dr. Priya Verma",
+        hospital: "Sunrise Clinic",
+        specialization: "Dermatologist",
+        date: "14 May 2026 ",
+        time: "11:15 AM",
+        token: "B07",
+        status: "Pending",
+        photo: "https://randomuser.me/api/portraits/women/44.jpg",
+    },
+    {
+        id: 3,
+        doctorName: "Dr. Raj Mehta",
+        hospital: "Apollo Hospital",
+        specialization: "Orthopedic",
+        date: "14 May 2026 ",
+        time: "11:15 AM",
+        token: "C03",
+        status: "Cancelled",
+        photo: "https://randomuser.me/api/portraits/men/55.jpg",
+    },
+];
 
 
 
@@ -71,7 +105,39 @@ const AppointmentHistory = () => {
             <FilterNavbar />
 
 
-            <RecentAppointments />
+           <div>
+            {/* ============================== APPOINTMENTS HISTORY ======================================= */}
+            <div className="rounded-2xl bg-white p-4 shadow-md sm:p-6">
+                <h2 className="text-xl font-semibold mb-4">Recent Appointments</h2>
+
+                <div className="hidden overflow-x-auto lg:block">
+                    <table className="w-full min-w-225 text-left border-collapse">
+                        <thead>
+                            <tr className="bg-gray-100 text-gray-600 text-sm">
+                                <th className="p-3">Doctor</th>
+                                <th className="p-3">Specialization</th>
+                                <th className="p-3">Date & Time</th>
+                                <th className="p-3">Token No.</th>
+                                <th className="p-3">Status</th>
+                                <th className="p-3">Action</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {appointments.map((item) => (
+                                <RecentAppointments key={item.id} item={item} isTableRow={true} />
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className="space-y-4 lg:hidden">
+                    {appointments.map((item) => (
+                        <RecentAppointments key={item.id} item={item} isTableRow={false} />
+                    ))}
+                </div>
+            </div>
+        </div>
 
 
 

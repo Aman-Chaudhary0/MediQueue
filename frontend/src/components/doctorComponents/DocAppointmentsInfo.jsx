@@ -18,6 +18,7 @@ const DocAppointmentsInfo = () => {
                         <CircleCheck className='h-12 w-12 shrink-0 rounded-full bg-green-200 p-1 text-green-900' />
                         <div className='min-w-0'>
                             <p className='text-xs font-semibold text-gray-600'>Completed</p>
+                            <p className='text-2xl font-bold'>1</p>
                         </div>
                     </div>
 

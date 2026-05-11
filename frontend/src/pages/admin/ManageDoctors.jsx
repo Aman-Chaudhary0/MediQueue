@@ -1,7 +1,10 @@
 import React from 'react'
 import {
-  Search, Bell, BriefcaseMedical, ShieldPlus, UserRoundCheck, UserRoundX, Phone, Mail, Trash2, HeartPulse, Brain, Bone, Baby, Stethoscope, Ear
+  Search, HeartPulse, Brain, Bone, Baby, Stethoscope, Ear
 } from "lucide-react";
+import ManageDocNav from '../../components/adminComponents/ManageDocNav';
+import ManageDocInfo from '../../components/adminComponents/ManageDocInfo';
+import DoctorInfoCard from '../../components/adminComponents/DoctorInfoCard';
 
 
 const doctors = [
@@ -94,103 +97,11 @@ const doctors = [
 const ManageDoctors = () => {
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6">
-      {/* ==================================  NAvbar ========================================= */}
-      <nav className="flex w-full flex-col gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm sm:px-6 lg:flex-row lg:items-center lg:justify-between">
 
-        {/* Left Section */}
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-          Manage Doctors
-        </h1>
-
-        {/* Right Section */}
-        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
-
-          {/* Search Box */}
-          <div className="relative w-full lg:w-auto">
-            <Search
-              size={18}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            />
-
-            <input
-              type="text"
-              placeholder="Search patients, doctors, appointments..."
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-64"
-            />
-          </div>
-
-          <div className="flex items-center justify-between gap-3 sm:justify-start">
-            {/* Notification Icon */}
-            <button className="relative rounded-xl bg-gray-50 p-3 transition hover:bg-gray-100">
-              <Bell size={20} className="text-gray-700" />
-
-              {/* Notification Dot */}
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span>
-            </button>
-
-            {/* Profile Tab */}
-            <div className="flex min-w-0 items-center gap-3 rounded-xl bg-gray-50 px-3 py-2 cursor-pointer transition hover:bg-gray-100">
-
-              <img
-                src="https://i.pravatar.cc/100"
-                alt="profile"
-                className="h-11 w-11 rounded-full object-cover"
-              />
-
-              <div className="min-w-0">
-                <h3 className="truncate text-sm font-semibold text-gray-800">
-                  Aman Sharma
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Admin
-                </p>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </nav>
+      <ManageDocNav />
 
 
-
-      {/* ============================ Patients and doctors info ============================= */}
-
-      <div className='w-full py-8 sm:py-10'>
-        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-          <div className='flex w-full items-center gap-4 rounded-2xl border border-blue-300 bg-blue-50 p-5 sm:p-6'>
-            <BriefcaseMedical className='h-12 w-12 shrink-0 rounded-full bg-blue-200 p-1 text-blue-900' />
-            <div className='min-w-0'>
-              <p className='text-xs font-semibold text-gray-600'>Total Doctors</p>
-              <p className='text-2xl font-bold'>86</p>
-            </div>
-          </div>
-
-          <div className='flex w-full items-center gap-4 rounded-2xl border border-green-300 bg-green-50 p-5 sm:p-6'>
-            <ShieldPlus className='h-12 w-12 shrink-0 rounded-full bg-green-200 p-1 text-green-900' />
-            <div className='min-w-0'>
-              <p className='text-xs font-semibold text-gray-600'>Active Doctors</p>
-              <p className='text-2xl font-bold'>78</p>
-            </div>
-          </div>
-
-          <div className='flex w-full items-center gap-4 rounded-2xl border border-violet-300 bg-violet-50 p-5 sm:p-6'>
-            <UserRoundCheck className='h-12 w-12 shrink-0 rounded-full bg-violet-200 p-1 text-violet-900' />
-            <div className='min-w-0'>
-              <p className='text-xs font-semibold text-gray-600'>On Duty Today</p>
-              <p className='text-2xl font-bold'>32</p>
-            </div>
-          </div>
-
-          <div className='flex w-full items-center gap-4 rounded-2xl border border-orange-300 bg-orange-50 p-5 sm:p-6'>
-            <UserRoundX className='h-12 w-12 shrink-0 rounded-full bg-orange-200 p-1 text-orange-900' />
-            <div className='min-w-0'>
-              <p className='text-xs font-semibold text-gray-600'>On leave</p>
-              <p className='text-2xl font-bold'>8</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
+      <ManageDocInfo />
       {/* ============================= Search Box ============================================ */}
       <div className="relative w-full">
         {/* Search Icon */}
@@ -231,96 +142,7 @@ const ManageDoctors = () => {
             {/* Table Body */}
             <tbody>
               {doctors.map((doctor, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-gray-100 hover:bg-gray-50 transition"
-                >
-
-                  {/* Doctor */}
-                  <td className="py-5">
-                    <div className="flex items-center gap-4">
-                      <img
-                        src={doctor.image}
-                        alt={doctor.name}
-                        className="w-14 h-14 rounded-full object-cover"
-                      />
-
-                      <div>
-                        <h3 className="font-semibold text-gray-800">
-                          {doctor.name}
-                        </h3>
-
-                        <p className="text-sm text-gray-500">
-                          ID: {doctor.id}
-                        </p>
-
-                        <p className="text-sm text-gray-500">
-                          {doctor.email}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-
-                  {/* Specialty */}
-                  <td>
-                    <div className="flex items-center gap-2 text-gray-700">
-                      {doctor.icon}
-                      {doctor.specialty}
-                    </div>
-                  </td>
-
-                  {/* Department */}
-                  <td className="text-gray-700">
-                    {doctor.department}
-                  </td>
-
-                  {/* Experience */}
-                  <td className="text-gray-700">
-                    {doctor.experience}
-                  </td>
-
-                  {/* Contact */}
-                  <td>
-                    <div className="space-y-2">
-
-                      <div className="flex items-center gap-2 text-gray-600 text-sm">
-                        <Phone size={15} />
-                        {doctor.phone}
-                      </div>
-
-                      <div className="flex items-center gap-2 text-gray-600 text-sm">
-                        <Mail size={15} />
-                        {doctor.email}
-                      </div>
-
-                    </div>
-                  </td>
-
-                  {/* Status */}
-                  <td>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${doctor.status === "Active"
-                        ? "bg-green-100 text-green-700"
-                        : doctor.status === "On Leave"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
-                        }`}
-                    >
-                      {doctor.status}
-                    </span>
-                  </td>
-
-                  {/* Actions */}
-                  <td>
-                    <div className="flex items-center justify-center">
-                      <button className="flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
-                        <Trash2 size={18} className="text-red-500" />
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-
-                </tr>
+                <DoctorInfoCard key={index} doctor={doctor} index={index} />
               ))}
             </tbody>
           </table>
@@ -328,85 +150,7 @@ const ManageDoctors = () => {
 
         <div className="space-y-4 lg:hidden">
           {doctors.map((doctor, index) => (
-            <div key={index} className="rounded-2xl border border-gray-100 p-4 shadow-sm">
-              <div className="mb-4 flex items-center gap-4">
-                <img
-                  src={doctor.image}
-                  alt={doctor.name}
-                  className="h-14 w-14 rounded-full object-cover"
-                />
-
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-gray-800">
-                    {doctor.name}
-                  </h3>
-
-                  <p className="text-sm text-gray-500">
-                    ID: {doctor.id}
-                  </p>
-
-                  <p className="truncate text-sm text-gray-500">
-                    {doctor.email}
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Specialty</p>
-                  <div className="mt-1 flex items-center gap-2 text-sm text-gray-700">
-                    {doctor.icon}
-                    {doctor.specialty}
-                  </div>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Department</p>
-                  <p className="mt-1 text-sm text-gray-700">{doctor.department}</p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Experience</p>
-                  <p className="mt-1 text-sm text-gray-700">{doctor.experience}</p>
-                </div>
-
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Status</p>
-                  <span
-                    className={`mt-1 inline-flex rounded-full px-3 py-1 text-xs font-medium ${doctor.status === "Active"
-                      ? "bg-green-100 text-green-700"
-                      : doctor.status === "On Leave"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-red-100 text-red-700"
-                      }`}
-                  >
-                    {doctor.status}
-                  </span>
-                </div>
-
-                <div className="sm:col-span-2">
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Contact</p>
-                  <div className="mt-1 space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Phone size={15} />
-                      {doctor.phone}
-                    </div>
-
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Mail size={15} />
-                      {doctor.email}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 flex items-center gap-3">
-                <button className="flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50">
-                  <Trash2 size={18} className="text-red-500" />
-                  Delete
-                </button>
-              </div>
-            </div>
+            <DoctorInfoCard key={index} doctor={doctor} index={index} isTableRow={false} />
           ))}
         </div>
 

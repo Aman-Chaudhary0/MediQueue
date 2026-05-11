@@ -27,9 +27,9 @@ const App = () => {
       {/* <BookAppointment  /> // doctor selection component wrong */}
       {/* <Dashboard />    */}
       {/* <LiveQueue /> */}
-      {/* <AppointmentHistory />  // component wrong */}
+      {/* <AppointmentHistory />   */}
       {/* <DoctorDashboard />     */}
-      <QueueManagement />
+      {/* <QueueManagement /> */}
       {/* <AdminDashboard />  */}
       {/* <ManageDoctors />  */}
       {/* <ContactUs /> */}
