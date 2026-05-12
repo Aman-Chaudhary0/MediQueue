@@ -1,0 +1,21 @@
+login
+register
+book appointment
+upcoming appointment
+live queue status
+doctors list
+patient total appointments details
+patient appointments history
+ patient current queue details
+patient live queue status
+queue summary
+appointment details
+cancel appointment
+create profile
+ update profile
+
+doctor appointment details
+upcoming patients list
+today schedule
+todat patient statement
+current patient details
