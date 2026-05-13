@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
-  Search, HeartPulse, Brain, Bone, Baby, Stethoscope, Ear
+  Search, HeartPulse, Brain, Bone, Baby, Stethoscope, Ear, Plus
 } from "lucide-react";
 import ManageDocNav from '../../components/adminComponents/ManageDocNav';
 import ManageDocInfo from '../../components/adminComponents/ManageDocInfo';
 import DoctorInfoCard from '../../components/adminComponents/DoctorInfoCard';
+import AddDoctorForm from '../../components/adminComponents/AddDoctorForm';
 
 
 const doctors = [
@@ -95,27 +96,52 @@ const doctors = [
 ];
 
 const ManageDoctors = () => {
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const handleAddDoctorSuccess = () => {
+    // Refresh doctors list after successful add
+    console.log('Doctor added successfully!')
+    setIsModalOpen(false)
+  }
+
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6">
 
       <ManageDocNav />
 
+      <AddDoctorForm
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={handleAddDoctorSuccess}
+      />
+
 
       <ManageDocInfo />
-      {/* ============================= Search Box ============================================ */}
-      <div className="relative w-full">
-        {/* Search Icon */}
-        <Search
-          size={18}
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-        />
 
-        {/* Input */}
-        <input
-          type="text"
-          placeholder="Search by name or speciality..."
-          className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+      {/* ============================= Add Doctor Button + Search Box ============================================ */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6 items-center justify-between">
+        <div className="relative flex-1 w-full">
+          {/* Search Icon */}
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+
+          {/* Input */}
+          <input
+            type="text"
+            placeholder="Search by name or speciality..."
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition-colors whitespace-nowrap"
+        >
+          <Plus size={20} />
+          Add Doctor
+        </button>
       </div>
 
 

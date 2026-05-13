@@ -9,12 +9,13 @@ import {
 } from "../contollers/patient.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
+import { authorizeRoles } from "../middlewares/role.middleware.js";
 
 const router = express.Router();
 
 
 // CREATE
-router.post("/", protect, createPatient);
+router.post("/", protect, authorizeRoles("patient"), createPatient);
 
 
 // GET ALL
@@ -26,10 +27,10 @@ router.get("/:id", protect, getPatient);
 
 
 // UPDATE
-router.put("/:id", protect, updatePatient);
+router.put("/:id", protect, authorizeRoles("patient"), updatePatient);
 
 
 // DELETE
-router.delete("/:id", protect, deletePatient);
+router.delete("/:id", protect,authorizeRoles("patient", "admin"), deletePatient);
 
 export default router;

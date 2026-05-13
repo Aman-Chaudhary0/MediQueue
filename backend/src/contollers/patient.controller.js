@@ -5,7 +5,7 @@ import Patient from "../models/patient.model.js";
 export const createPatient = async (req, res) => {
   try {
 
-    const { age, mobileNo, gender } = req.body;
+    const { age, mobileNo, gender, profilepic  } = req.body;
 
     // req.user comes from auth middleware
     const patient = await Patient.create({
@@ -13,6 +13,7 @@ export const createPatient = async (req, res) => {
       age,
       mobileNo,
       gender,
+      profilepic
     });
 
     res.status(201).json({
@@ -29,6 +30,8 @@ export const createPatient = async (req, res) => {
     });
   }
 };
+
+
 
 
 
@@ -52,6 +55,8 @@ export const getPatients = async (req, res) => {
     });
   }
 };
+
+
 
 
 
@@ -86,6 +91,8 @@ export const getPatient = async (req, res) => {
 
 
 
+
+
 // UPDATE PATIENT
 export const updatePatient = async (req, res) => {
   try {
@@ -112,6 +119,8 @@ export const updatePatient = async (req, res) => {
     });
   }
 };
+
+
 
 
 

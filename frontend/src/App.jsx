@@ -17,6 +17,7 @@ import AppointmentDetails from './pages/patient/AppointmentDetails'
 import Analytics from './pages/admin/Analytics'
 import AdminProfile from './pages/admin/AdminProfile'
 import { Route, Routes } from 'react-router-dom'
+import ProtectedRoute from './components/ProtectedRoute'
 
 const App = () => {
   return (
@@ -32,23 +33,23 @@ const App = () => {
         <Route path='/register' element={<Register />} />
 
         {/* patient Routes */}
-        <Route path='/patient/dashboard' element={<Dashboard />} />
-        <Route path='/patient/book-appointment' element={<BookAppointment />} />
-        <Route path='/patient/appointment-history' element={<AppointmentHistory />} />
-        <Route path='/patient/live-queue' element={<LiveQueue />} />
-        <Route path='/patient/appointment' element={<AppointmentDetails />} />
-        <Route path='/patient/profile' element={<PatientProfile />} />
+        <Route path='/patient/dashboard' element={<ProtectedRoute requiredRoles={['patient']}><Dashboard /></ProtectedRoute>} />
+        <Route path='/patient/book-appointment' element={<ProtectedRoute requiredRoles={['patient']}><BookAppointment /></ProtectedRoute>} />
+        <Route path='/patient/appointment-history' element={<ProtectedRoute requiredRoles={['patient']}><AppointmentHistory /></ProtectedRoute>} />
+        <Route path='/patient/live-queue' element={<ProtectedRoute requiredRoles={['patient']}><LiveQueue /></ProtectedRoute>} />
+        <Route path='/patient/appointment' element={<ProtectedRoute requiredRoles={['patient']}><AppointmentDetails /></ProtectedRoute>} />
+        <Route path='/patient/profile' element={<ProtectedRoute requiredRoles={['patient']}><PatientProfile /></ProtectedRoute>} />
 
         {/* Doctor Routes */}
-        <Route path='/doctor/dashboard' element={<DoctorDashboard />} />
-        <Route path='/doctor/queue-management' element={<QueueManagement />} />
-        <Route path='/doctor/profile' element={<DoctorProfile />} />
+        <Route path='/doctor/dashboard' element={<ProtectedRoute requiredRoles={['doctor']}><DoctorDashboard /></ProtectedRoute>} />
+        <Route path='/doctor/queue-management' element={<ProtectedRoute requiredRoles={['doctor']}><QueueManagement /></ProtectedRoute>} />
+        <Route path='/doctor/profile' element={<ProtectedRoute requiredRoles={['doctor']}><DoctorProfile /></ProtectedRoute>} />
 
         {/* admin rouutes */}
-        <Route path='/admin/dashboard' element={<AdminDashboard />} />
-        <Route path='/admin/manage-doctors' element={<ManageDoctors />} />
-        <Route path='/admin/analytics' element={<Analytics />} />
-        <Route path='/admin/profile' element={<AdminProfile />} />
+        <Route path='/admin/dashboard' element={<ProtectedRoute requiredRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path='/admin/manage-doctors' element={<ProtectedRoute requiredRoles={['admin']}><ManageDoctors /></ProtectedRoute>} />
+        <Route path='/admin/analytics' element={<ProtectedRoute requiredRoles={['admin']}><Analytics /></ProtectedRoute>} />
+        <Route path='/admin/profile' element={<ProtectedRoute requiredRoles={['admin']}><AdminProfile /></ProtectedRoute>} />
 
 
       </Routes>

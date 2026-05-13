@@ -7,7 +7,7 @@ import { generateAccessToken, generateRefreshToken } from "../utils/generateToke
 // REGISTER
 export const register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     // check existing user
     const existingUser = await User.findOne({ email });
@@ -28,7 +28,7 @@ export const register = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role,
+      role: "patient",
     });
 
     // Generate access and refresh tokens
