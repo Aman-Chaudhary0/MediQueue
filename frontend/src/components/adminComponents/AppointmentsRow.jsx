@@ -8,6 +8,9 @@ const statusStyles = {
 
 
 const AppointmentsRow = ({item}) => {
+
+// ==========================================================================================================================================================================
+
   return (
      <div className="rounded-2xl border border-gray-100 p-4 shadow-sm lg:grid lg:grid-cols-4 lg:items-center lg:gap-4 lg:rounded-none lg:border-0 lg:border-b lg:px-6 lg:py-4 lg:shadow-none">
             <div className="mb-4 flex items-center gap-3 lg:mb-0">

@@ -3,6 +3,9 @@ import React from 'react'
 
 
 const HomeHowWorks = () => {
+
+// ==========================================================================================================================================================================
+
   return (
       <div className='max-w-4xl mx-auto px-4 py-12 lg:py-20 bg-white'>
                     <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 mb-8 lg:mb-12 text-center'>How It Works?</h2>

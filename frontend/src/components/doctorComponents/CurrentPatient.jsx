@@ -43,6 +43,9 @@ const CurrentPatient = () => {
 
 
 
+
+// ==========================================================================================================================================================================
+
   return (
    <section>
                 {/* ========================== current patient card =========================== */}
@@ -89,7 +92,7 @@ const CurrentPatient = () => {
 
                                 <div className="mt-1 flex items-center justify-center gap-2 text-sm text-gray-600 sm:justify-start">
                                     <Clock size={16} />
-                                    {patient.time} • {patient.date}
+                                    {patient.time} â€¢ {patient.date}
                                 </div>
                             </div>
                         </div>
@@ -149,7 +152,7 @@ const CurrentPatient = () => {
 
                     {/* Bottom Note */}
                     <div className="mt-6 text-sm text-yellow-600 bg-yellow-50 p-3 rounded-lg">
-                        ⚠️ No previous prescriptions found for this patient.
+                        âš ï¸ No previous prescriptions found for this patient.
                     </div>
                 </div>
             </section>

@@ -3,6 +3,9 @@ import React from 'react'
 import { assets } from '../../assets/assets'
 
 const LiveQueueCard = () => {
+
+// ==========================================================================================================================================================================
+
     return (
         <div className="lg:col-span-1 bg-white rounded-2xl shadow-md overflow-hidden">
             <div className="w-full h-40 sm:h-48">

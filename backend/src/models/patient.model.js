@@ -12,17 +12,20 @@ const patientSchema = new mongoose.Schema(
     age: {
       type: String,
       required: true,
+      default: "N/A"
     },
 
     mobileNo: {
       type: String,
       required: true,
+      default: "N/A"
     },
 
     gender: {
       type: String,
       enum: ["male", "female", "other"],
       required: true,
+      default: "N/A"
     },
 
     profilepic: {

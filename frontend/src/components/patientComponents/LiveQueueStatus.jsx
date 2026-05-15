@@ -4,6 +4,9 @@ import React from 'react'
 import { assets } from '../../assets/assets'
 
 const LiveQueueStatus = () => {
+
+// ==========================================================================================================================================================================
+
     return (
         <div className='flex flex-col lg:flex-row lg:items-start lg:space-x-8 mb-6 sm:mb-8 border-t border-gray-300 p-4 sm:p-8 shadow-2xl rounded gap-6'>
             <div className='w-full lg:w-2/3'>

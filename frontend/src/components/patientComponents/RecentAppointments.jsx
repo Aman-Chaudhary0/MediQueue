@@ -58,6 +58,9 @@ const RecentAppointments = ({ item, isTableRow = true }) => {
   }
 
   // Desktop table row view
+
+// ==========================================================================================================================================================================
+
   return (
     <tr key={item.id} className="border-b hover:bg-gray-50">
       {/* Doctor Column */}

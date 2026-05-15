@@ -1,7 +1,14 @@
+
 import { Bell, Search } from 'lucide-react'
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
+import { assets } from '../../assets/assets'
 
 const ManageDocNav = () => {
+    const navigate = useNavigate()
+
+// ==========================================================================================================================================================================
+
     return (
         <nav className="flex w-full flex-col gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm sm:px-6 lg:flex-row lg:items-center lg:justify-between">
 
@@ -37,17 +44,20 @@ const ManageDocNav = () => {
                     </button>
 
                     {/* Profile Tab */}
-                    <div className="flex min-w-0 items-center gap-3 rounded-xl bg-gray-50 px-3 py-2 cursor-pointer transition hover:bg-gray-100">
+                    <div
+                       
+                        className="flex min-w-0 items-center gap-3 rounded-xl bg-gray-50 px-3 py-2 cursor-pointer transition hover:bg-gray-100"
+                    >
 
                         <img
-                            src="https://i.pravatar.cc/100"
+                            src={assets.adminProfile}
                             alt="profile"
                             className="h-11 w-11 rounded-full object-cover"
                         />
 
                         <div className="min-w-0">
                             <h3 className="truncate text-sm font-semibold text-gray-800">
-                                Aman Sharma
+                                Aman Chaudhary
                             </h3>
                             <p className="text-xs text-gray-500">
                                 Admin

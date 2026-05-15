@@ -21,6 +21,9 @@ const QueueManagement = () => {
 
 
 
+
+// ==========================================================================================================================================================================
+
     return (
         <div className='mx-auto max-w-7xl p-4 sm:p-6'>
 
@@ -68,7 +71,7 @@ const QueueManagement = () => {
                 {/* Footer */}
                 <div className="flex justify-between items-center mt-6">
                     <button className="text-blue-600 text-sm hover:underline">
-                        View All Patients →
+                        View All Patients â†’
                     </button>
 
 
@@ -85,7 +88,7 @@ const QueueManagement = () => {
                     </div>
                     <p className="text-sm text-gray-700">
                         <span className="font-semibold text-blue-700">Tips:</span>{" "}
-                        Use <span className="font-medium">“Next Patient”</span> to move to the next in queue after completing consultation.
+                        Use <span className="font-medium">â€œNext Patientâ€</span> to move to the next in queue after completing consultation.
                     </p>
                 </div>
 

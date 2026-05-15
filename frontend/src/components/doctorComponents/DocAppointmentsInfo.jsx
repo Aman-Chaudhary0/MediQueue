@@ -3,6 +3,9 @@ import { CircleCheck, ClipboardClock, Clock, Users } from 'lucide-react';
 
 
 const DocAppointmentsInfo = () => {
+
+// ==========================================================================================================================================================================
+
   return (
       <div className='w-full py-8 sm:py-10'>
                 <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>

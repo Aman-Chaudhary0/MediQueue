@@ -1,11 +1,23 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { assets } from '../../assets/assets'
 import AuthHeader from '../../components/common/AuthHeader'
 import authService from '../../api/authService'
+import { useAuth } from '../../context/AuthContext'
 
 const Register = () => {
     const navigate = useNavigate()
+    const { isAuthenticated, user } = useAuth()
+
+    useEffect(() => {
+        if (!isAuthenticated) return
+        if (user?.role === 'admin') navigate('/admin/dashboard', { replace: true })
+        else if (user?.role === 'doctor') navigate('/doctor/dashboard', { replace: true })
+        else if (user?.role === 'patient') navigate('/patient/dashboard', { replace: true })
+        else navigate('/', { replace: true })
+    }, [isAuthenticated, user, navigate])
+
+    if (isAuthenticated) return null
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -71,6 +83,9 @@ const Register = () => {
             setLoading(false)
         }
     }
+
+
+// ==========================================================================================================================================================================
 
     return (
         <div className='flex flex-col lg:flex-row min-h-screen'>
@@ -155,7 +170,7 @@ const Register = () => {
                             </div>
 
                             <div className='rounded-md border border-blue-100 bg-blue-50 p-3 text-xs sm:text-sm text-blue-900'>
-                                ℹ️ New accounts are registered as patients by default. Doctors and Admins are created by administrators.
+                                â„¹ï¸ New accounts are registered as patients by default. Doctors and Admins are created by administrators.
                             </div>
 
                             <div className='flex items-center justify-between'>
@@ -183,7 +198,7 @@ const Register = () => {
                     {/* ===================== Info Box =========================== */}
 
                     <div className='mt-4 sm:mt-6 p-6 sm:p-8 bg-white rounded-lg shadow-lg text-center'>
-                        <p className='text-xs sm:text-sm font-semibold mb-3'>👨‍⚕️ Are you a Doctor?</p>
+                        <p className='text-xs sm:text-sm font-semibold mb-3'>ðŸ‘¨â€âš•ï¸ Are you a Doctor?</p>
                         <p className='text-xs sm:text-sm mb-3'>Contact an administrator to create your account</p>
                         <button className='w-full bg-gray-600 text-white py-2 sm:py-3 px-4 text-sm sm:text-base rounded-md hover:bg-gray-700 transition-colors'>
                             Contact Admin

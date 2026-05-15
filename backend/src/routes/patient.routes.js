@@ -6,7 +6,11 @@ import {
   getPatient,
   updatePatient,
   deletePatient,
+  getMyPatient,
 } from "../contollers/patient.controller.js";
+
+// multipart upload (multer -> memory storage)
+import upload from "../middlewares/upload.middleware.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
@@ -22,12 +26,22 @@ router.post("/", protect, authorizeRoles("patient"), createPatient);
 router.get("/", protect, getPatients);
 
 
+// GET MY PATIENT (current logged-in user)
+router.get("/me", protect, getMyPatient);
+
 // GET SINGLE
 router.get("/:id", protect, getPatient);
 
 
 // UPDATE
-router.put("/:id", protect, authorizeRoles("patient"), updatePatient);
+router.put(
+  "/:id",
+  protect,
+  authorizeRoles("patient"),
+  // expects multipart/form-data with file field name: profilepic
+  upload.single("profilepic"),
+  updatePatient
+);
 
 
 // DELETE

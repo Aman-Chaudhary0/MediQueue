@@ -1,6 +1,9 @@
 import React from 'react'
 
 const QueueStatusCard = ({ item, getStatusStyle }) => {
+
+// ==========================================================================================================================================================================
+
     return (
         <div
             className="flex flex-col gap-2 sm:grid sm:grid-cols-3 sm:items-center py-3 border-b last:border-none"

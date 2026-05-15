@@ -1,8 +1,9 @@
 import dotenv from "dotenv";
-import connectDB from "./src/db/db.js";
-import app from "./src/app.js";
 
 dotenv.config();
+
+const { default: connectDB } = await import("./src/db/db.js");
+const { default: app } = await import("./src/app.js");
 
 connectDB();
 

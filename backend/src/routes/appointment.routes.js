@@ -6,7 +6,7 @@ import {
     getAppointmentDetails,
     cancelAppointment,
     updateAppointmentStatus,
-} from "../contollers/appointmentController.js";
+} from "../contollers/appointment.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";

@@ -1,11 +1,24 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { assets } from '../../assets/assets'
 import AuthHeader from '../../components/common/AuthHeader'
 import authService from '../../api/authService'
+import { useAuth } from '../../context/AuthContext'
 
 const Login = () => {
     const navigate = useNavigate()
+    const { isAuthenticated, user, login } = useAuth()
+
+    useEffect(() => {
+        if (!isAuthenticated) return
+        if (user?.role === 'admin') navigate('/admin/dashboard', { replace: true })
+        else if (user?.role === 'doctor') navigate('/doctor/dashboard', { replace: true })
+        else if (user?.role === 'patient') navigate('/patient/dashboard', { replace: true })
+        else navigate('/', { replace: true })
+    }, [isAuthenticated, user, navigate])
+
+    if (isAuthenticated) return null
+
     const [formData, setFormData] = useState({
         email: '',
         password: ''
@@ -34,8 +47,7 @@ const Login = () => {
 
             if (response.success || response.message === "Login successful") {
                 setSuccess('Login successful! Redirecting...')
-                localStorage.setItem('user', JSON.stringify(response.user))
-                localStorage.setItem('accessToken', response.accessToken)
+                login(response.user, response.accessToken)
 
                 // Redirect based on role
                 setTimeout(() => {
@@ -54,6 +66,9 @@ const Login = () => {
             setLoading(false)
         }
     }
+
+
+// ==========================================================================================================================================================================
 
     return (
         <div className='flex flex-col lg:flex-row min-h-screen'>

@@ -5,6 +5,9 @@ import AnalyticsCharts from '../../components/adminComponents/AnalyticsCharts';
 
 
 const Analytics = () => {
+
+// ==========================================================================================================================================================================
+
     return (
         <div className="bg-gray-50 min-h-screen p-6">
 

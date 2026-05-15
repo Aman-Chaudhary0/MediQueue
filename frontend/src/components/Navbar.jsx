@@ -1,14 +1,21 @@
 import React, { useState } from 'react'
 import { assets } from '../assets/assets'
 import { Menu, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 // 3 sections - logo, list of pages, login/signup and responsive hamburger menu for mobile 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false)
+    const navigate = useNavigate()
+    const { isAuthenticated, logout } = useAuth()
 
     const toggleMenu = () => {
         setIsOpen(!isOpen)
     }
+
+
+// ==========================================================================================================================================================================
 
     return (
         <div className='w-full bg-white shadow-md'>
@@ -20,16 +27,58 @@ const Navbar = () => {
 
                 {/* Desktop Menu */}
                 <ul className='hidden lg:flex items-center space-x-6'>
-                    <li className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors'>Home</li>
+                    <li
+                        onClick={() => navigate('/')}
+                        className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors'
+                    >
+                        Home
+                    </li>
                     <li className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors'>How it Works</li>
                     <li className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors'>Features</li>
-                    <li className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors'>Contact Us</li>
+                    <li
+                        onClick={() => navigate('/contact-us')}
+                        className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors'
+                    >
+                        Contact Us
+                    </li>
                 </ul>
 
                 {/* Desktop Buttons */}
                 <div className='hidden lg:flex space-x-3'>
-                    <button className='text-blue-600 hover:text-blue-800 border border-blue-600 py-2 px-4 text-sm rounded-md transition-colors'>Login</button>
-                    <button className='text-blue-600 hover:text-blue-800 border border-blue-600 py-2 px-4 text-sm rounded-md transition-colors'>Sign Up</button>
+                    {isAuthenticated ? (
+                        <>
+                            <button
+                                onClick={() => navigate('/')}
+                                className='text-blue-600 hover:text-blue-800 border border-blue-600 py-2 px-4 text-sm rounded-md transition-colors'
+                            >
+                                Home
+                            </button>
+                            <button
+                                onClick={() => {
+                                    logout()
+                                    navigate('/')
+                                }}
+                                className='text-blue-600 hover:text-blue-800 border border-blue-600 py-2 px-4 text-sm rounded-md transition-colors'
+                            >
+                                Logout
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => navigate('/login')}
+                                className='text-blue-600 hover:text-blue-800 border border-blue-600 py-2 px-4 text-sm rounded-md transition-colors'
+                            >
+                                Login
+                            </button>
+                            <button
+                                onClick={() => navigate('/register')}
+                                className='text-blue-600 hover:text-blue-800 border border-blue-600 py-2 px-4 text-sm rounded-md transition-colors'
+                            >
+                                Sign Up
+                            </button>
+                        </>
+                    )}
                 </div>
 
                 {/* Mobile Menu Toggle */}
@@ -42,14 +91,57 @@ const Navbar = () => {
             {isOpen && (
                 <div className='lg:hidden bg-white border-t border-gray-200'>
                     <ul className='flex flex-col px-4 py-4 space-y-3'>
-                        <li className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors py-2'>Home</li>
+                        <li
+                            onClick={() => navigate('/')}
+                            className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors py-2'
+                        >
+                            Home
+                        </li>
                         <li className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors py-2'>How it Works</li>
                         <li className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors py-2'>Features</li>
-                        <li className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors py-2'>Contact Us</li>
+                        <li
+                            onClick={() => navigate('/contact-us')}
+                            className='text-sm text-gray-600 hover:text-gray-800 cursor-pointer transition-colors py-2'
+                        >
+                            Contact Us
+                        </li>
                     </ul>
+
                     <div className='flex flex-col gap-2 px-4 py-3 border-t border-gray-200'>
-                        <button className='w-full text-blue-600 border border-blue-600 py-2 px-4 text-sm rounded-md hover:bg-blue-50 transition-colors'>Login</button>
-                        <button className='w-full text-blue-600 border border-blue-600 py-2 px-4 text-sm rounded-md hover:bg-blue-50 transition-colors'>Sign Up</button>
+                        {isAuthenticated ? (
+                            <>
+                                <button
+                                    onClick={() => navigate('/')}
+                                    className='w-full text-blue-600 border border-blue-600 py-2 px-4 text-sm rounded-md hover:bg-blue-50 transition-colors'
+                                >
+                                    Home
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        logout()
+                                        navigate('/')
+                                    }}
+                                    className='w-full text-blue-600 border border-blue-600 py-2 px-4 text-sm rounded-md hover:bg-blue-50 transition-colors'
+                                >
+                                    Logout
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={() => navigate('/login')}
+                                    className='w-full text-blue-600 border border-blue-600 py-2 px-4 text-sm rounded-md hover:bg-blue-50 transition-colors'
+                                >
+                                    Login
+                                </button>
+                                <button
+                                    onClick={() => navigate('/register')}
+                                    className='w-full text-blue-600 border border-blue-600 py-2 px-4 text-sm rounded-md hover:bg-blue-50 transition-colors'
+                                >
+                                    Sign Up
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             )}

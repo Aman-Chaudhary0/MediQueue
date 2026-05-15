@@ -3,8 +3,11 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import authRoutes from "./routes/auth.routes.js";
 import patientRoutes from "./routes/patient.routes.js";
-import appointmentRoutes from "./routes/appointmentRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
+import appointmentRoutes from "./routes/appointment.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import doctorRoutes from "./routes/doctor.routes.js";
+import uploadRoutes from "./routes/upload.routes.js";
+
 
 const app = express();
 
@@ -23,6 +26,8 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/patient", patientRoutes);
+app.use("/api/doctor", doctorRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/upload", uploadRoutes);
 
 export default app;

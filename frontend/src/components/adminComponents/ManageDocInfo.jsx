@@ -2,6 +2,9 @@ import { BriefcaseMedical, ShieldPlus, UserRoundCheck } from 'lucide-react'
 import React from 'react'
 
 const ManageDocInfo = () => {
+
+// ==========================================================================================================================================================================
+
   return (
       <div className='w-full py-8 sm:py-10'>
         <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>

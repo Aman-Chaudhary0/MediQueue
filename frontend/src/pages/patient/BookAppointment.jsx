@@ -7,6 +7,9 @@ import AppointmentSummary from '../../components/patientComponents/AppointmentSu
 const BookAppointment = () => {
 
 
+
+// ==========================================================================================================================================================================
+
     return (
         <div className='mx-auto max-w-7xl p-3 sm:p-6'>
 

@@ -12,7 +12,6 @@ const AppointmentDetails = () => {
         token: "A15",
         status: "pending", // pending | completed | cancelled
         fees: 500,
-        notes: "Regular heart checkup",
     };
 
     const getStatusStyle = () => {
@@ -22,6 +21,9 @@ const AppointmentDetails = () => {
             return "bg-yellow-100 text-yellow-600";
         return "bg-red-100 text-red-600";
     };
+
+
+// ==========================================================================================================================================================================
 
     return (
         <div className="bg-gray-50 min-h-screen p-6">
@@ -87,17 +89,9 @@ const AppointmentDetails = () => {
 
                     <div>
                         <p className="text-gray-500 text-sm">Consultation Fees</p>
-                        <p className="font-medium">₹{appointment.fees}</p>
+                        <p className="font-medium">â‚¹{appointment.fees}</p>
                     </div>
 
-                </div>
-
-                {/* Notes Section */}
-                <div className="mt-6">
-                    <p className="text-gray-500 text-sm">Notes</p>
-                    <p className="bg-gray-100 p-3 rounded-lg mt-1 text-gray-700">
-                        {appointment.notes}
-                    </p>
                 </div>
 
                 {/* Action Buttons */}

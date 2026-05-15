@@ -65,6 +65,9 @@ const DoctorDashboard = () => {
     };
 
 
+
+// ==========================================================================================================================================================================
+
     return (
         <div className='mx-auto max-w-7xl px-4 py-4 sm:px-6'>
             <DoctorNav />
@@ -76,12 +79,12 @@ const DoctorDashboard = () => {
             {/* ================================ Upcoming Patients =============================== */}
             <div className="mb-8 w-full rounded-2xl bg-white p-4 shadow-md sm:p-5">
 
-                {/* 🔹 Heading */}
+                {/* ðŸ”¹ Heading */}
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
                     Upcoming Patients
                 </h2>
 
-                {/* 🔹 Header */}
+                {/* ðŸ”¹ Header */}
                 <div className="hidden grid-cols-4 border-b pb-2 font-medium text-gray-600 md:grid">
                     <div>Token No.</div>
                     <div>Patient Details</div>
@@ -89,7 +92,7 @@ const DoctorDashboard = () => {
                     <div>Status</div>
                 </div>
 
-                {/* 🔹 Rows */}
+                {/* ðŸ”¹ Rows */}
                 {data.map((item) => (
                     <UpcomingPatientsCard key={item.token} item={item} />
                 ))}

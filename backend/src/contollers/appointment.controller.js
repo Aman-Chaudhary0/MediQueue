@@ -1,4 +1,4 @@
-import Appointment from "../models/appointmentModel.js";
+import Appointment from "../models/appointment.model.js";
 import Patient from "../models/patient.model.js";
 
 
@@ -195,6 +195,7 @@ export const cancelAppointment = async (req, res) => {
     });
   }
 };
+
 
 
 

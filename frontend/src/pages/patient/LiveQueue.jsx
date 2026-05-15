@@ -35,6 +35,9 @@ const LiveQueue = () => {
 
     const [doctor, setDoctor] = useState("");
 
+
+// ==========================================================================================================================================================================
+
     return (
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
 
@@ -90,7 +93,7 @@ const LiveQueue = () => {
                         <h2 className="text-xl font-semibold text-gray-800">
                             Queue Status
                         </h2>
-                        <button className='w-fit bg-green-100 rounded px-4 py-1 text-green-600 font-bold text-sm'><span className='text-lg'>•</span> Live</button>
+                        <button className='w-fit bg-green-100 rounded px-4 py-1 text-green-600 font-bold text-sm'><span className='text-lg'>â€¢</span> Live</button>
                     </div>
 
                     <div className="hidden sm:grid grid-cols-3 font-medium text-gray-600 border-b pb-2">

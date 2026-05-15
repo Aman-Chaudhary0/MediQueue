@@ -7,32 +7,44 @@ dotenv.config();
 
 async function createAdmin() {
   try {
-    // Connect to MongoDB
-    await mongoose.connect(process.env.MONGO_URI || "mongodb://localhost:27017/medi-queue");
+    if (!process.env.MONGO_URI) {
+      throw new Error("MONGO_URI is not set in your environment (.env)");
+    }
+
+    await mongoose.connect(process.env.MONGO_URI);
     console.log("✅ Connected to MongoDB");
 
-    // Check if admin already exists
     const existingAdmin = await User.findOne({ role: "admin" });
     if (existingAdmin) {
       console.log("⚠️  Admin already exists:", existingAdmin.email);
       process.exit(0);
     }
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash("admin123", salt);
+    const existingByEmail = await User.findOne({ email: process.env.ADMIN_EMAIL || "myselfamanchaudhary1@gmail.com" });
+    if (existingByEmail) {
+      console.log("⚠️  Admin/user with this email already exists:", existingByEmail.email);
+      process.exit(0);
+    }
 
-    // Create admin user
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(
+      process.env.ADMIN_PASSWORD || "Aman@1234",
+      salt
+    );
+
     const admin = await User.create({
-      name: "Admin User",
-      email: "admin@example.com",
+      name: process.env.ADMIN_NAME || "Aman Chaudhary",
+      email: process.env.ADMIN_EMAIL || "myselfamanchaudhary1@gmail.com",
       password: hashedPassword,
       role: "admin",
+      phone: process.env.ADMIN_PHONE || "9758195321",
+      hospital: process.env.ADMIN_HOSPITAL || "N/A",
+      profilePic: process.env.ADMIN_PROFILE_PIC_URL || null,
     });
 
     console.log("✅ Admin user created successfully!");
-    console.log("📧 Email: admin@example.com");
-    console.log("🔑 Password: admin123");
+    console.log("📧 Email:", admin.email);
+    console.log("🔑 Password:", process.env.ADMIN_PASSWORD || "Aman@1234");
     console.log("👤 Role: admin");
     console.log("\n💡 Change password after first login!");
 

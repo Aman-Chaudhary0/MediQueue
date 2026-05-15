@@ -71,6 +71,9 @@ const AddDoctorForm = ({ isOpen, onClose, onSuccess }) => {
 
     if (!isOpen) return null
 
+
+// ==========================================================================================================================================================================
+
     return (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4'>
             <div className='bg-white rounded-lg shadow-xl max-w-md w-full'>
@@ -133,7 +136,7 @@ const AddDoctorForm = ({ isOpen, onClose, onSuccess }) => {
                             <input
                                 type="password"
                                 id="password"
-                                placeholder="••••••••"
+                                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                                 value={formData.password}
                                 onChange={handleChange}
                                 className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600'

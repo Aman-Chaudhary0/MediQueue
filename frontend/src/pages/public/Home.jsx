@@ -5,6 +5,9 @@ import HomeHowWorks from '../../components/common/HomeHowWorks'
 import HomeWhyChoose from '../../components/common/HomeWhyChoose'
 
 const Home = () => {
+
+// ==========================================================================================================================================================================
+
     return (
         <div>
             <Navbar />

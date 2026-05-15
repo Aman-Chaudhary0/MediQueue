@@ -29,15 +29,18 @@ const ImportantInstructions = () => {
     ];
 
 
+
+// ==========================================================================================================================================================================
+
     return (
         <div className="w-full max-w-5xl mx-auto">
 
-            {/* 🔹 Heading */}
+            {/* ðŸ”¹ Heading */}
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 Important Instructions
             </h2>
 
-            {/* 🔹 4 Boxes Row */}
+            {/* ðŸ”¹ 4 Boxes Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                 {instructions.map((item, index) => (
                     <div

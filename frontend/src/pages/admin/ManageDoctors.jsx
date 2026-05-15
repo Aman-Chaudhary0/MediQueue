@@ -104,6 +104,9 @@ const ManageDoctors = () => {
     setIsModalOpen(false)
   }
 
+
+// ==========================================================================================================================================================================
+
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6">
 
@@ -191,7 +194,7 @@ const ManageDoctors = () => {
           <div className="flex flex-wrap items-center gap-2">
 
             <button className="w-9 h-9 rounded-lg border border-gray-200 text-gray-500">
-              ←
+              â†
             </button>
 
             <button className="w-9 h-9 rounded-lg bg-blue-600 text-white">
@@ -213,7 +216,7 @@ const ManageDoctors = () => {
             </button>
 
             <button className="w-9 h-9 rounded-lg border border-gray-200 text-gray-500">
-              →
+              â†’
             </button>
 
           </div>

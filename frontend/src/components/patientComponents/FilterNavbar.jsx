@@ -2,6 +2,9 @@ import React from 'react'
 import { Search } from 'lucide-react'
 
 const FilterNavbar = () => {
+
+// ==========================================================================================================================================================================
+
   return (
     <div className="mb-6 flex flex-col gap-4 rounded-2xl bg-white px-4 py-4 shadow-sm sm:px-6 lg:flex-row lg:items-center lg:justify-between">
       <h1 className="text-xl font-semibold text-gray-800">

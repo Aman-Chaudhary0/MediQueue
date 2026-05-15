@@ -15,11 +15,13 @@ import DoctorProfile from './pages/doctor/DoctorProfile'
 import PatientProfile from './pages/patient/PatientProfile'
 import AppointmentDetails from './pages/patient/AppointmentDetails'
 import Analytics from './pages/admin/Analytics'
-import AdminProfile from './pages/admin/AdminProfile'
 import { Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 
 const App = () => {
+
+// ==========================================================================================================================================================================
+
   return (
     <div>
       <Routes>
@@ -49,7 +51,7 @@ const App = () => {
         <Route path='/admin/dashboard' element={<ProtectedRoute requiredRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
         <Route path='/admin/manage-doctors' element={<ProtectedRoute requiredRoles={['admin']}><ManageDoctors /></ProtectedRoute>} />
         <Route path='/admin/analytics' element={<ProtectedRoute requiredRoles={['admin']}><Analytics /></ProtectedRoute>} />
-        <Route path='/admin/profile' element={<ProtectedRoute requiredRoles={['admin']}><AdminProfile /></ProtectedRoute>} />
+        {/* AdminProfile route removed (admin profile page deleted) */}
 
 
       </Routes>

@@ -13,7 +13,6 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
 
-
     password: {
       type: String,
       required: true,
@@ -25,7 +24,22 @@ const userSchema = new mongoose.Schema(
       default: "patient",
     },
 
+    // Admin profile fields (optional; doctors/patients can ignore)
+    phone: {
+      type: String,
+      default: "",
+    },
 
+    hospital: {
+      type: String,
+      default: "",
+    },
+
+    // store image URL (ImageKit URL or any hosted URL)
+    profilePic: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

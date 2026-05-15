@@ -3,6 +3,9 @@ import { Bell, Zap, Heart, ChartLine } from 'lucide-react'
 
 
 const HomeWhyChoose = () => {
+
+// ==========================================================================================================================================================================
+
   return (
      <div className='max-w-4xl mx-auto px-4 py-12 lg:py-20'>
                     <h2 className='text-2xl sm:text-3xl font-bold text-gray-800 mb-8 lg:mb-12 text-center'>Why Choose MediQueue?</h2>

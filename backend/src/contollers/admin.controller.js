@@ -1,4 +1,6 @@
+
 import User from "../models/user.model.js";
+import Doctor from "../models/docter.model.js";
 import bcrypt from "bcrypt";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
 
@@ -37,6 +39,10 @@ export const registerDoctor = async (req, res) => {
       password: hashedPassword,
       role: "doctor",
     });
+
+    // Create empty doctor profile document immediately
+    // so /api/doctor/me works after registration.
+    await Doctor.create({ user: doctor._id });
 
     // Remove password from response
     const userResponse = {
