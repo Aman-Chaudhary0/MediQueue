@@ -1,7 +1,9 @@
 import { MapPin } from 'lucide-react'
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const UpcomingAppointment = ({ appointment, loading, error }) => {
+    const navigate = useNavigate()
 
 // ==========================================================================================================================================================================
 
@@ -39,7 +41,13 @@ const UpcomingAppointment = ({ appointment, loading, error }) => {
                             <p className='text-blue-600 text-xl sm:text-2xl font-semibold'>{appointment.token}</p>
                         </div>
                     </div>
-                    <button className='w-full sm:w-auto text-blue-600 px-4 py-2 text-sm sm:text-base rounded hover:bg-blue-600 hover:text-white transition duration-300 border-2 border-blue-600 font-semibold'>View Details</button>
+                    <button
+                        type='button'
+                        onClick={() => navigate(`/patient/appointment/${appointment.id}`)}
+                        className='w-full sm:w-auto text-blue-600 px-4 py-2 text-sm sm:text-base rounded hover:bg-blue-600 hover:text-white transition duration-300 border-2 border-blue-600 font-semibold'
+                    >
+                        View Details
+                    </button>
                 </>
             )}
         </div>

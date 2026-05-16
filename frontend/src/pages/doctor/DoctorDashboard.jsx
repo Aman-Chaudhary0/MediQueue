@@ -1,60 +1,54 @@
 import { Clock, Users } from 'lucide-react';
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import DoctorNav from '../../components/doctorComponents/DoctorNav';
 import DocAppointmentsInfo from '../../components/doctorComponents/DocAppointmentsInfo';
 import UpcomingPatientsCard from '../../components/doctorComponents/UpcomingPatientsCard';
 import TodaySchedule from '../../components/doctorComponents/TodaySchedule';
-
-
+import authService from '../../api/authService';
 
 const DoctorDashboard = () => {
-    const data = [
-        {
-            token: "A01",
-            name: "Ravi Kumar",
-            gender: "Male",
-            age: 32,
-            time: "10:00 AM",
-            status: "Waiting",
-        },
-        {
-            token: "A02",
-            name: "Anjali Singh",
-            gender: "Female",
-            age: 27,
-            time: "10:10 AM",
-            status: "Waiting",
-        },
-        {
-            token: "A03",
-            name: "Mohit Sharma",
-            gender: "Male",
-            age: 40,
-            time: "10:20 AM",
-            status: "Waiting",
-        },
-        {
-            token: "A04",
-            name: "Neha Verma",
-            gender: "Female",
-            age: 35,
-            time: "10:30 AM",
-            status: "Waiting",
-        },
-    ];
+    const [upcomingPatients, setUpcomingPatients] = useState([])
+    const [upcomingPatientsLoading, setUpcomingPatientsLoading] = useState(true)
+    const [upcomingPatientsError, setUpcomingPatientsError] = useState('')
+    const [todaySchedule, setTodaySchedule] = useState([])
+    const [todayScheduleLoading, setTodayScheduleLoading] = useState(true)
+    const [todayScheduleError, setTodayScheduleError] = useState('')
 
+    useEffect(() => {
+        const fetchUpcomingPatients = async () => {
+            try {
+                setUpcomingPatientsLoading(true)
+                setUpcomingPatientsError('')
 
-    const schedule = [
-        { time: "9:00 AM", token: "A8", name: "Deepak Verma", status: "completed" },
-        { time: "9:30 AM", token: "A9", name: "Anjali Gupta", status: "completed" },
-        { time: "10:00 AM", token: "A10", name: "Rohit Kumar", status: "inprogress" },
-        { time: "10:30 AM", token: "A11", name: "Neha Singh", status: "active" },
-        { time: "11:00 AM", token: "A12", name: "Vikram Mehta", status: "upcoming" },
-        { time: "11:30 AM", token: "A13", name: "Pooja Sharma", status: "upcoming" },
-        { time: "12:00 PM", token: "A14", name: "Arjun Patel", status: "upcoming" },
-        { time: "12:30 PM", token: "A15", name: "Sneha Reddy", status: "upcoming" },
-        { time: "1:00 PM", name: "Lunch Break", status: "break" },
-    ];
+                const response = await authService.getDoctorUpcomingPatients()
+                setUpcomingPatients(Array.isArray(response?.appointments) ? response.appointments : [])
+            } catch (err) {
+                setUpcomingPatientsError(err?.response?.data?.message || "Failed to load today's upcoming patients")
+            } finally {
+                setUpcomingPatientsLoading(false)
+            }
+        }
+
+        fetchUpcomingPatients()
+    }, [])
+
+    useEffect(() => {
+        const fetchTodaySchedule = async () => {
+            try {
+                setTodayScheduleLoading(true)
+                setTodayScheduleError('')
+
+                const response = await authService.getDoctorTodaySchedule()
+                setTodaySchedule(Array.isArray(response?.appointments) ? response.appointments : [])
+            } catch (err) {
+                setTodayScheduleError(err?.response?.data?.message || "Failed to load today's schedule")
+            } finally {
+                setTodayScheduleLoading(false)
+            }
+        }
+
+        fetchTodaySchedule()
+    }, [])
 
     const statusStyles = {
         completed: "bg-green-100 text-green-600",
@@ -64,7 +58,91 @@ const DoctorDashboard = () => {
         break: "bg-gray-100 text-gray-500",
     };
 
+    const formattedUpcomingPatients = useMemo(() => {
+        const todayDateKey = new Date().toDateString()
 
+        return upcomingPatients
+            .filter((appointment) => {
+                const bookingDateKey = new Date(appointment.appointmentDate).toDateString()
+                return bookingDateKey === todayDateKey
+            })
+            .map((appointment) => ({
+            id: appointment._id,
+            token: appointment?.tokenNumber || '--',
+            name: appointment?.patient?.user?.name || 'Patient',
+            gender: appointment?.patient?.gender || 'N/A',
+            age: appointment?.patient?.age || 'N/A',
+            time: appointment?.startTime || '--',
+            status: appointment?.status === 'confirmed' ? 'Confirmed' : 'Waiting',
+        }))
+    }, [upcomingPatients])
+
+    const formattedTodaySchedule = useMemo(() => {
+        const todayDateKey = new Date().toDateString()
+
+        return todaySchedule
+            .filter((appointment) => new Date(appointment.appointmentDate).toDateString() === todayDateKey)
+            .map((appointment) => ({
+                id: appointment._id,
+                time: appointment?.startTime || '--',
+                token: appointment?.tokenNumber || '--',
+                name: appointment?.patient?.user?.name || 'Patient',
+                status:
+                    appointment?.status === 'completed'
+                        ? 'completed'
+                        : appointment?.status === 'confirmed'
+                            ? 'active'
+                            : 'upcoming',
+            }))
+    }, [todaySchedule]);
+
+    const parseTimeToMinutes = (timeValue) => {
+        // expects "h:mm AM/PM" like "9:30 AM"
+        if (!timeValue) return null;
+
+        const match = String(timeValue).match(/^(\d{1,2}):(\d{2})\s(AM|PM)$/i);
+        if (!match) return null;
+
+        let hours = Number(match[1]);
+        const minutes = Number(match[2]);
+        const period = match[3].toUpperCase();
+
+        if (period === "PM" && hours !== 12) hours += 12;
+        if (period === "AM" && hours === 12) hours = 0;
+
+        return hours * 60 + minutes;
+    };
+
+    const todayStats = useMemo(() => {
+        const todayDateKey = new Date().toDateString();
+
+        const completedToday = (todaySchedule || []).filter((appointment) => {
+            const bookingDateKey = new Date(appointment.appointmentDate).toDateString();
+            return bookingDateKey === todayDateKey && appointment?.status === "completed";
+        });
+
+        const patientsSeen = completedToday.length;
+
+        const durationsMinutes = completedToday
+            .map((a) => {
+                const startMins = parseTimeToMinutes(a.startTime);
+                const endMins = parseTimeToMinutes(a.endTime);
+                if (startMins == null || endMins == null) return null;
+                const diff = endMins - startMins;
+                return diff >= 0 ? diff : null;
+            })
+            .filter((v) => typeof v === "number");
+
+        const avgMinutes =
+            durationsMinutes.length > 0
+                ? Math.round(durationsMinutes.reduce((sum, v) => sum + v, 0) / durationsMinutes.length)
+                : null;
+
+        return {
+            patientsSeen,
+            avgMinutes,
+        };
+    }, [todaySchedule]);
 
 // ==========================================================================================================================================================================
 
@@ -79,12 +157,10 @@ const DoctorDashboard = () => {
             {/* ================================ Upcoming Patients =============================== */}
             <div className="mb-8 w-full rounded-2xl bg-white p-4 shadow-md sm:p-5">
 
-                {/* ðŸ”¹ Heading */}
                 <h2 className="text-xl font-semibold text-gray-800 mb-4">
                     Upcoming Patients
                 </h2>
 
-                {/* ðŸ”¹ Header */}
                 <div className="hidden grid-cols-4 border-b pb-2 font-medium text-gray-600 md:grid">
                     <div>Token No.</div>
                     <div>Patient Details</div>
@@ -92,15 +168,27 @@ const DoctorDashboard = () => {
                     <div>Status</div>
                 </div>
 
-                {/* ðŸ”¹ Rows */}
-                {data.map((item) => (
-                    <UpcomingPatientsCard key={item.token} item={item} />
-                ))}
+                {upcomingPatientsLoading ? (
+                    <div className='rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-600'>
+                        Loading today's upcoming patients...
+                    </div>
+                ) : upcomingPatientsError ? (
+                    <div className='rounded-xl bg-red-50 p-6 text-center text-sm text-red-600'>
+                        {upcomingPatientsError}
+                    </div>
+                ) : formattedUpcomingPatients.length === 0 ? (
+                    <div className='rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-600'>
+                        No upcoming patients found for today.
+                    </div>
+                ) : (
+                    formattedUpcomingPatients.map((item) => (
+                        <UpcomingPatientsCard key={item.id} item={item} />
+                    ))
+                )}
             </div>
 
             <div className="w-full rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
 
-                {/* Header */}
                 <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <h2 className="text-lg font-semibold text-gray-800">
                         Today's Schedule
@@ -110,26 +198,35 @@ const DoctorDashboard = () => {
                     </button>
                 </div>
 
-                {/* Timeline */}
                 <div className="relative">
-                    {/* Vertical Line */}
                     <div className="absolute bottom-0 left-[2.65rem] top-0 hidden w-0.5 bg-gray-200 sm:block"></div>
 
                     <div className="space-y-4">
-                        {schedule.map((item, i) => (
-                            <TodaySchedule
-                                key={`${item.time}-${item.name}-${i}`}
-                                item={item}
-                                statusStyles={statusStyles}
-                            />
-                        ))}
+                        {todayScheduleLoading ? (
+                            <div className='rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-600'>
+                                Loading today's schedule...
+                            </div>
+                        ) : todayScheduleError ? (
+                            <div className='rounded-xl bg-red-50 p-6 text-center text-sm text-red-600'>
+                                {todayScheduleError}
+                            </div>
+                        ) : formattedTodaySchedule.length === 0 ? (
+                            <div className='rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-600'>
+                                No appointments scheduled for today.
+                            </div>
+                        ) : (
+                            formattedTodaySchedule.map((item) => (
+                                <TodaySchedule
+                                    key={item.id}
+                                    item={item}
+                                    statusStyles={statusStyles}
+                                />
+                            ))
+                        )}
                     </div>
                 </div>
 
-                {/* Footer */}
                 <div className="mt-8 grid grid-cols-1 gap-6 border-t border-gray-100 pt-6 sm:grid-cols-2">
-
-                    {/* Avg Time */}
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-100 rounded-full">
                             <Clock className="text-blue-600" size={20} />
@@ -140,12 +237,11 @@ const DoctorDashboard = () => {
                                 Average Consultation Time
                             </p>
                             <h3 className="text-lg font-semibold text-blue-600">
-                                15 min
+                                {todayScheduleLoading ? "..." : todayStats.avgMinutes == null ? "-- min" : `${todayStats.avgMinutes} min`}
                             </h3>
                         </div>
                     </div>
 
-                    {/* Patients Seen */}
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-100 rounded-full">
                             <Users className="text-blue-600" size={20} />
@@ -156,15 +252,12 @@ const DoctorDashboard = () => {
                                 Patients Seen
                             </p>
                             <h3 className="text-lg font-semibold text-blue-600">
-                                12
+                                {todayScheduleLoading ? "..." : todayStats.patientsSeen}
                             </h3>
                         </div>
                     </div>
-
                 </div>
             </div>
-
-
         </div>
     )
 }

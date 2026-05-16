@@ -1,115 +1,91 @@
-import React, { useState } from 'react'
-import {
-  Search, HeartPulse, Brain, Bone, Baby, Stethoscope, Ear, Plus
-} from "lucide-react";
-import ManageDocNav from '../../components/adminComponents/ManageDocNav';
-import ManageDocInfo from '../../components/adminComponents/ManageDocInfo';
-import DoctorInfoCard from '../../components/adminComponents/DoctorInfoCard';
-import AddDoctorForm from '../../components/adminComponents/AddDoctorForm';
-
-
-const doctors = [
-  {
-    name: "Dr. James Smith",
-    id: "DCT001",
-    email: "james.smith@mediqueue.com",
-    specialty: "Cardiologist",
-    department: "Cardiology",
-    experience: "12 Years",
-    phone: "+1 555-123-4567",
-    status: "Active",
-    image: "https://i.pravatar.cc/100?img=11",
-    icon: <HeartPulse size={18} className="text-red-500" />,
-  },
-  {
-    name: "Dr. Sarah Johnson",
-    id: "DCT002",
-    email: "sarah.johnson@mediqueue.com",
-    specialty: "Dermatologist",
-    department: "Dermatology",
-    experience: "8 Years",
-    phone: "+1 555-123-4568",
-    status: "Active",
-    image: "https://i.pravatar.cc/100?img=32",
-    icon: <Stethoscope size={18} className="text-purple-500" />,
-  },
-  {
-    name: "Dr. Michael Brown",
-    id: "DCT003",
-    email: "michael.brown@mediqueue.com",
-    specialty: "Neurologist",
-    department: "Neurology",
-    experience: "15 Years",
-    phone: "+1 555-123-4569",
-    status: "Active",
-    image: "https://i.pravatar.cc/100?img=14",
-    icon: <Brain size={18} className="text-blue-500" />,
-  },
-  {
-    name: "Dr. Emily Davis",
-    id: "DCT004",
-    email: "emily.davis@mediqueue.com",
-    specialty: "Pediatrician",
-    department: "Pediatrics",
-    experience: "10 Years",
-    phone: "+1 555-123-4570",
-    status: "On Leave",
-    image: "https://i.pravatar.cc/100?img=24",
-    icon: <Baby size={18} className="text-green-500" />,
-  },
-  {
-    name: "Dr. Robert Wilson",
-    id: "DCT005",
-    email: "robert.wilson@mediqueue.com",
-    specialty: "Orthopedic",
-    department: "Orthopedics",
-    experience: "9 Years",
-    phone: "+1 555-123-4571",
-    status: "Active",
-    image: "https://i.pravatar.cc/100?img=18",
-    icon: <Bone size={18} className="text-cyan-500" />,
-  },
-  {
-    name: "Dr. Olivia Martinez",
-    id: "DCT006",
-    email: "olivia.martinez@mediqueue.com",
-    specialty: "Gynecologist",
-    department: "Gynecology",
-    experience: "11 Years",
-    phone: "+1 555-123-4572",
-    status: "Active",
-    image: "https://i.pravatar.cc/100?img=44",
-    icon: <HeartPulse size={18} className="text-pink-500" />,
-  },
-  {
-    name: "Dr. Daniel Thompson",
-    id: "DCT007",
-    email: "daniel.thompson@mediqueue.com",
-    specialty: "ENT Specialist",
-    department: "ENT",
-    experience: "7 Years",
-    phone: "+1 555-123-4573",
-    status: "Inactive",
-    image: "https://i.pravatar.cc/100?img=15",
-    icon: <Ear size={18} className="text-teal-500" />,
-  },
-];
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Search, Plus } from "lucide-react";
+import ManageDocNav from "../../components/adminComponents/ManageDocNav";
+import ManageDocInfo from "../../components/adminComponents/ManageDocInfo";
+import DoctorInfoCard from "../../components/adminComponents/DoctorInfoCard";
+import AddDoctorForm from "../../components/adminComponents/AddDoctorForm";
+import authService from "../../api/authService";
 
 const ManageDoctors = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const [deletingDoctorId, setDeletingDoctorId] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+
+  const fetchDoctors = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const response = await authService.getAdminDoctors();
+      const list = Array.isArray(response?.doctors) ? response.doctors : response?.doctors ?? [];
+      setDoctors(list);
+    } catch (err) {
+      setError(err?.response?.data?.message || "Failed to load doctors");
+      setDoctors([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchDoctors();
+  }, [fetchDoctors]);
 
   const handleAddDoctorSuccess = () => {
-    // Refresh doctors list after successful add
-    console.log('Doctor added successfully!')
-    setIsModalOpen(false)
-  }
+    setIsModalOpen(false);
+    fetchDoctors();
+  };
 
+  const handleDeleteRequest = useCallback((doctorId) => {
+    setDeleteError("");
+    setDeletingDoctorId(doctorId);
+  }, []);
 
-// ==========================================================================================================================================================================
+  const handleDeleteAbort = useCallback(() => {
+    setDeleteError("");
+    setDeletingDoctorId(null);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(
+    async (doctorId) => {
+      try {
+        setDeleteError("");
+        setDeletingDoctorId(doctorId);
+        await authService.deleteUser(doctorId);
+        setDeletingDoctorId(null);
+        await fetchDoctors();
+      } catch (err) {
+        setDeleteError(err?.response?.data?.message || "Failed to delete doctor");
+      }
+    },
+    [fetchDoctors]
+  );
+
+  const cards = useMemo(() => {
+    return doctors.map((d) => {
+      const statusRaw = d.status ?? d.user?.status ?? "active";
+      return {
+        ...d,
+        id: d._id,
+        name: d.user?.name || d.name,
+        email: d.user?.email || d.email,
+        phone: d.mobileNo || d.phone,
+        status:
+          String(statusRaw).toLowerCase() === "on-leave" || String(statusRaw).toLowerCase() === "on leave"
+            ? "On Leave"
+            : String(statusRaw).toLowerCase() === "inactive"
+              ? "Inactive"
+              : "Active",
+        image: d.profilePic || d.image || "https://via.placeholder.com/100",
+      };
+    });
+  }, [doctors]);
 
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6">
-
       <ManageDocNav />
 
       <AddDoctorForm
@@ -118,23 +94,19 @@ const ManageDoctors = () => {
         onSuccess={handleAddDoctorSuccess}
       />
 
-
       <ManageDocInfo />
 
-      {/* ============================= Add Doctor Button + Search Box ============================================ */}
       <div className="flex flex-col sm:flex-row gap-4 mb-6 items-center justify-between">
         <div className="relative flex-1 w-full">
-          {/* Search Icon */}
           <Search
             size={18}
             className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
           />
-
-          {/* Input */}
           <input
             type="text"
             placeholder="Search by name or speciality..."
             className="w-full bg-gray-50 border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled
           />
         </div>
 
@@ -147,15 +119,21 @@ const ManageDoctors = () => {
         </button>
       </div>
 
+      {error ? (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 text-center">
+          {error}
+        </div>
+      ) : null}
 
-      {/* ============================ DOCTORS LIST ====================================== */}
+      {deleteError ? (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 text-center">
+          {deleteError}
+        </div>
+      ) : null}
 
       <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
-
         <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-275">
-
-            {/* Table Head */}
             <thead>
               <tr className="text-left text-gray-500 text-sm border-b border-gray-100">
                 <th className="pb-4 font-semibold">Doctor</th>
@@ -168,64 +146,53 @@ const ManageDoctors = () => {
               </tr>
             </thead>
 
-            {/* Table Body */}
             <tbody>
-              {doctors.map((doctor, index) => (
-                <DoctorInfoCard key={index} doctor={doctor} index={index} />
-              ))}
+              {loading ? (
+                <tr>
+                  <td colSpan={7} className="py-6 text-center text-sm text-gray-600">
+                    Loading doctors...
+                  </td>
+                </tr>
+              ) : (
+                cards.map((doctor) => (
+                  <DoctorInfoCard
+                    key={doctor.id}
+                    doctor={doctor}
+                    isTableRow={true}
+                    isConfirmingDelete={deletingDoctorId === doctor.id}
+                    onRequestDelete={() => handleDeleteRequest(doctor.id)}
+                    onConfirmDelete={() => handleDeleteConfirm(doctor.id)}
+                    onAbortDelete={handleDeleteAbort}
+                  />
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         <div className="space-y-4 lg:hidden">
-          {doctors.map((doctor, index) => (
-            <DoctorInfoCard key={index} doctor={doctor} index={index} isTableRow={false} />
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-          <p className="text-sm text-gray-500">
-            Showing 1 to 7 of 86 doctors
-          </p>
-
-          {/* Pagination */}
-          <div className="flex flex-wrap items-center gap-2">
-
-            <button className="w-9 h-9 rounded-lg border border-gray-200 text-gray-500">
-              â†
-            </button>
-
-            <button className="w-9 h-9 rounded-lg bg-blue-600 text-white">
-              1
-            </button>
-
-            <button className="w-9 h-9 rounded-lg border border-gray-200">
-              2
-            </button>
-
-            <button className="w-9 h-9 rounded-lg border border-gray-200">
-              3
-            </button>
-
-            <span className="px-2 text-gray-400">...</span>
-
-            <button className="w-9 h-9 rounded-lg border border-gray-200">
-              12
-            </button>
-
-            <button className="w-9 h-9 rounded-lg border border-gray-200 text-gray-500">
-              â†’
-            </button>
-
-          </div>
-
+          {loading ? (
+            <div className="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-600">
+              Loading doctors...
+            </div>
+          ) : (
+            cards.map((doctor) => (
+              <DoctorInfoCard
+                key={doctor.id}
+                doctor={doctor}
+                index={doctor.id}
+                isTableRow={false}
+                isConfirmingDelete={deletingDoctorId === doctor.id}
+                onRequestDelete={() => handleDeleteRequest(doctor.id)}
+                onConfirmDelete={() => handleDeleteConfirm(doctor.id)}
+                onAbortDelete={handleDeleteAbort}
+              />
+            ))
+          )}
         </div>
       </div>
-
     </div>
-  )
-}
+  );
+};
 
-export default ManageDoctors
+export default ManageDoctors;

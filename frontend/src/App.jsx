@@ -30,22 +30,29 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path='/contact-us' element={<ContactUs />} />
 
+
+
         {/* Auth Routes */}
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
+
+
 
         {/* patient Routes */}
         <Route path='/patient/dashboard' element={<ProtectedRoute requiredRoles={['patient']}><Dashboard /></ProtectedRoute>} />
         <Route path='/patient/book-appointment' element={<ProtectedRoute requiredRoles={['patient']}><BookAppointment /></ProtectedRoute>} />
         <Route path='/patient/appointment-history' element={<ProtectedRoute requiredRoles={['patient']}><AppointmentHistory /></ProtectedRoute>} />
         <Route path='/patient/live-queue' element={<ProtectedRoute requiredRoles={['patient']}><LiveQueue /></ProtectedRoute>} />
-        <Route path='/patient/appointment' element={<ProtectedRoute requiredRoles={['patient']}><AppointmentDetails /></ProtectedRoute>} />
+        <Route path='/patient/appointment/:appointmentId' element={<ProtectedRoute requiredRoles={['patient']}><AppointmentDetails /></ProtectedRoute>} />
         <Route path='/patient/profile' element={<ProtectedRoute requiredRoles={['patient']}><PatientProfile /></ProtectedRoute>} />
+
+
 
         {/* Doctor Routes */}
         <Route path='/doctor/dashboard' element={<ProtectedRoute requiredRoles={['doctor']}><DoctorDashboard /></ProtectedRoute>} />
         <Route path='/doctor/queue-management' element={<ProtectedRoute requiredRoles={['doctor']}><QueueManagement /></ProtectedRoute>} />
         <Route path='/doctor/profile' element={<ProtectedRoute requiredRoles={['doctor']}><DoctorProfile /></ProtectedRoute>} />
+
 
         {/* admin rouutes */}
         <Route path='/admin/dashboard' element={<ProtectedRoute requiredRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />

@@ -5,6 +5,8 @@ import {
   getAllUsers,
   getAllDoctors,
   deleteUser,
+  getAdminDashboardStats,
+  getAdminAnalytics,
 } from "../contollers/admin.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
@@ -47,5 +49,20 @@ router.delete(
   deleteUser
 );
 
+// Admin dashboard stats
+router.get(
+  "/dashboard/stats",
+  protect,
+  authorizeRoles("admin"),
+  getAdminDashboardStats
+);
+
+// Admin analytics (charts + cards)
+router.get(
+  "/analytics",
+  protect,
+  authorizeRoles("admin"),
+  getAdminAnalytics
+);
 
 export default router;

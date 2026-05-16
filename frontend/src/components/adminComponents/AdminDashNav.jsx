@@ -9,7 +9,7 @@ const AdminDashNav = () => {
 // ==========================================================================================================================================================================
 
   return (
-    <nav className="flex w-full flex-col gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+    <nav className="flex w-full justify-between gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm sm:px-6 lg:flex-row lg:items-center lg:justify-between">
 
                 {/* Left Section */}
                 <div className='flex flex-col gap-4'>
@@ -46,19 +46,7 @@ const AdminDashNav = () => {
                 {/* Right Section */}
                 <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto">
 
-                    {/* Search Box */}
-                    <div className="relative w-full lg:w-auto">
-                        <Search
-                            size={18}
-                            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                        />
-
-                        <input
-                            type="text"
-                            placeholder="Search patients, doctors, appointments..."
-                            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-500 sm:w-64"
-                        />
-                    </div>
+                 
 
                     <div className="flex items-center justify-between gap-3 sm:justify-start">
                         {/* Notification Icon */}

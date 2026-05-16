@@ -91,6 +91,74 @@ const authService = {
     const response = await api.get("/appointments/my-appointments");
     return response.data;
   },
+
+  // Appointments: Get doctor dashboard stats
+  getDoctorAppointmentStats: async () => {
+    const response = await api.get("/appointments/doctor/stats");
+    return response.data;
+  },
+
+  // Appointments: Get today's upcoming patients for doctor dashboard
+  getDoctorUpcomingPatients: async () => {
+    const response = await api.get("/appointments/doctor/upcoming-patients");
+    return response.data;
+  },
+
+  // Appointments: Get today's full schedule for doctor dashboard
+  getDoctorTodaySchedule: async () => {
+    const response = await api.get("/appointments/doctor/today-schedule");
+    return response.data;
+  },
+
+  // Appointments: Get single appointment details
+  getAppointmentDetails: async (appointmentId) => {
+    const response = await api.get(`/appointments/${appointmentId}`);
+    return response.data;
+  },
+
+  // Appointments: Update appointment status
+  updateAppointmentStatus: async (appointmentId, status) => {
+    const response = await api.put(`/appointments/${appointmentId}/status`, {
+      status,
+    });
+    return response.data;
+  },
+
+  // Appointments: Cancel appointment
+  cancelAppointment: async (appointmentId) => {
+    const response = await api.put(`/appointments/${appointmentId}/cancel`);
+    return response.data;
+  },
+
+  // Live queue: get real-time queue status for current patient
+  getLiveQueueStatus: async () => {
+    const response = await api.get("/appointments/live-queue/status");
+    return response.data;
+  },
+
+  // Admin dashboard stats
+  getAdminDashboardStats: async () => {
+    const response = await api.get("/admin/dashboard/stats");
+    return response.data;
+  },
+
+  // Admin: doctors list
+  getAdminDoctors: async () => {
+    const response = await api.get("/admin/doctors");
+    return response.data;
+  },
+
+  // Admin analytics (charts + cards)
+  getAdminAnalytics: async () => {
+    const response = await api.get("/admin/analytics");
+    return response.data;
+  },
+
+  // Admin: delete user (admin deletes by userId)
+  deleteUser: async (userId) => {
+    const response = await api.delete(`/admin/users/${userId}`);
+    return response.data;
+  },
 };
 
 export default authService;

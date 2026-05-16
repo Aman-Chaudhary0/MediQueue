@@ -1,6 +1,8 @@
 
 import User from "../models/user.model.js";
 import Doctor from "../models/docter.model.js";
+import Patient from "../models/patient.model.js";
+import Appointment from "../models/appointment.model.js";
 import bcrypt from "bcrypt";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
 
@@ -10,6 +12,7 @@ export const registerDoctor = async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    
     // Validate required fields
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -129,6 +132,83 @@ export const deleteUser = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "User deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ===================== ADMIN DASHBOARD STATS =====================
+
+const parseTimeToMinutes = (timeValue) => {
+  // expects "h:mm AM/PM" like "9:30 AM"
+  if (!timeValue) return null;
+  const match = String(timeValue).match(/^(\d{1,2}):(\d{2})\s(AM|PM)$/i);
+  if (!match) return null;
+
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const period = match[3].toUpperCase();
+
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+
+  return hours * 60 + minutes;
+};
+
+const getTodayRange = () => {
+  const now = new Date();
+  const startOfDay = new Date(now);
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  return { startOfDay, endOfDay };
+};
+
+export const getAdminDashboardStats = async (req, res) => {
+  try {
+    const { startOfDay, endOfDay } = getTodayRange();
+
+    const [doctorsCount, patientsCount, appointmentsToday] = await Promise.all([
+      User.countDocuments({ role: "doctor" }),
+      Patient.countDocuments({}),
+      Appointment.find({
+        appointmentDate: { $gte: startOfDay, $lte: endOfDay },
+        status: { $ne: "cancelled" },
+      }).select("startTime endTime status"),
+    ]);
+
+    // Average consultation time from completed appointments today
+    const completedToday = appointmentsToday.filter((a) => a.status === "completed");
+
+    const durations = completedToday
+      .map((a) => {
+        const startMins = parseTimeToMinutes(a.startTime);
+        const endMins = parseTimeToMinutes(a.endTime);
+        if (startMins == null || endMins == null) return null;
+        const diff = endMins - startMins;
+        return diff >= 0 ? diff : null;
+      })
+      .filter((v) => typeof v === "number");
+
+    const avgMinutes =
+      durations.length > 0
+        ? Math.round(durations.reduce((sum, v) => sum + v, 0) / durations.length)
+        : 0;
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalPatients: patientsCount,
+        totalDoctors: doctorsCount,
+        appointmentsToday: appointmentsToday.length,
+        avgWaitTimeMinutes: avgMinutes,
+      },
     });
   } catch (error) {
     res.status(500).json({

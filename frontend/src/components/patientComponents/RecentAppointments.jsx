@@ -1,6 +1,9 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const RecentAppointments = ({ item, isTableRow = true }) => {
+  const navigate = useNavigate()
+
   if (!isTableRow) {
     // Mobile card view
     return (
@@ -50,7 +53,11 @@ const RecentAppointments = ({ item, isTableRow = true }) => {
           </div>
         </div>
 
-        <button className='mt-4 w-full rounded border-2 border-blue-600 px-3 py-2 text-sm font-semibold text-blue-600 transition duration-300 hover:bg-blue-600 hover:text-white sm:w-auto'>
+        <button
+          type="button"
+          onClick={() => navigate(`/patient/appointment/${item.id}`)}
+          className='mt-4 w-full rounded border-2 border-blue-600 px-3 py-2 text-sm font-semibold text-blue-600 transition duration-300 hover:bg-blue-600 hover:text-white sm:w-auto'
+        >
           View Details
         </button>
       </div>
@@ -106,7 +113,13 @@ const RecentAppointments = ({ item, isTableRow = true }) => {
 
       {/* Action */}
       <td className="p-3">
-        <button className=' text-blue-600 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition duration-300 border-2 text-sm border-blue-600 font-semibold'>View Details</button>
+        <button
+          type="button"
+          onClick={() => navigate(`/patient/appointment/${item.id}`)}
+          className=' text-blue-600 px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition duration-300 border-2 text-sm border-blue-600 font-semibold'
+        >
+          View Details
+        </button>
       </td>
     </tr>
   )

@@ -4,9 +4,13 @@ import {
     bookAppointment,
     getAvailableSlots,
     getPatientAppointments,
+    getDoctorAppointmentStats,
+    getDoctorUpcomingPatients,
+    getDoctorTodaySchedule,
     getAppointmentDetails,
     cancelAppointment,
     updateAppointmentStatus,
+    getLiveQueueStatusForPatient,
 } from "../contollers/appointment.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
@@ -31,8 +35,38 @@ router.get(
     getPatientAppointments
 );
 
+router.get(
+    "/doctor/stats",
+    protect,
+    authorizeRoles("doctor"),
+    getDoctorAppointmentStats
+);
+
+router.get(
+    "/doctor/upcoming-patients",
+    protect,
+    authorizeRoles("doctor"),
+    getDoctorUpcomingPatients
+);
+
+router.get(
+    "/doctor/today-schedule",
+    protect,
+    authorizeRoles("doctor"),
+    getDoctorTodaySchedule
+);
+
 
 // =============================== GENERAL ROUTES==========================================
+
+// Live queue status for patient (real-time via polling)
+router.get(
+    "/live-queue/status",
+    protect,
+    authorizeRoles("patient"),
+    getLiveQueueStatusForPatient
+);
+
 // Get appointment details
 router.get("/:appointmentId", protect, getAppointmentDetails);
 

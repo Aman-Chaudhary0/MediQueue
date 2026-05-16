@@ -1,6 +1,8 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const DashRecentAppointments = ({ item }) => {
+    const navigate = useNavigate()
     const statusClasses =
         item.status === "Completed"
             ? "bg-green-100 text-green-500"
@@ -55,7 +57,13 @@ const DashRecentAppointments = ({ item }) => {
 
             {/* Action */}
             <td className="p-2 sm:p-3">
-                <button className='text-xs sm:text-sm text-blue-600 px-1 sm:px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition duration-300 border-2 border-blue-600 font-semibold truncate'>View</button>
+                <button
+                    type="button"
+                    onClick={() => navigate(`/patient/appointment/${item.id}`)}
+                    className='text-xs sm:text-sm text-blue-600 px-1 sm:px-2 py-1 rounded hover:bg-blue-600 hover:text-white transition duration-300 border-2 border-blue-600 font-semibold truncate'
+                >
+                    View
+                </button>
             </td>
 
         </tr>
