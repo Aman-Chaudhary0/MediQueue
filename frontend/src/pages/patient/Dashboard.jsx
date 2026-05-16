@@ -1,50 +1,126 @@
-import React from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import PatientNav from '../../components/patientComponents/PatientNav';
 import UpcomingAppointment from '../../components/patientComponents/UpcomingAppointment';
 import LiveQueueStatus from '../../components/patientComponents/LiveQueueStatus';
 import QuickOptions from '../../components/patientComponents/QuickOptions';
 import DashAppointmentSummary from '../../components/patientComponents/DashAppointmentSummary';
 import DashRecentAppointments from '../../components/patientComponents/DashRecentAppointments';
+import authService from '../../api/authService';
 
-const appointments = [
-    {
-        id: 1,
-        doctorName: "Dr. Amit Sharma",
-        hospital: "City Care Hospital",
-        specialization: "Cardiologist",
-        date: "14 May 2026 ",
-        time: "11:15 AM",
-        token: "A12",
-        status: "Completed",
-        photo: "https://randomuser.me/api/portraits/men/32.jpg",
-    },
-    {
-        id: 2,
-        doctorName: "Dr. Priya Verma",
-        hospital: "Sunrise Clinic",
-        specialization: "Dermatologist",
-        date: "14 May 2026 ",
-        time: "11:15 AM",
-        token: "B07",
-        status: "Pending",
-        photo: "https://randomuser.me/api/portraits/women/44.jpg",
-    },
-    {
-        id: 3,
-        doctorName: "Dr. Raj Mehta",
-        hospital: "Apollo Hospital",
-        specialization: "Orthopedic",
-        date: "14 May 2026 ",
-        time: "11:15 AM",
-        token: "C03",
-        status: "Cancelled",
-        photo: "https://randomuser.me/api/portraits/men/55.jpg",
-    },
-];
 
+const parseAppointmentDateTime = (appointmentDateValue, startTime) => {
+    const appointmentDate = new Date(appointmentDateValue)
+    if (!startTime) return appointmentDate
+
+    const match = String(startTime).match(/^(\d{1,2}):(\d{2})\s(AM|PM)$/i)
+    if (!match) return appointmentDate
+
+    let hours = Number(match[1])
+    const minutes = Number(match[2])
+    const period = match[3].toUpperCase()
+
+    if (period === 'PM' && hours !== 12) hours += 12
+    if (period === 'AM' && hours === 12) hours = 0
+
+    const combinedDate = new Date(appointmentDate)
+    combinedDate.setHours(hours, minutes, 0, 0)
+    return combinedDate
+}
 
 
 const Dashboard = () => {
+    const [appointments, setAppointments] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+
+    useEffect(() => {
+        const fetchAppointments = async () => {
+            try {
+                setLoading(true)
+                setError('')
+
+                const response = await authService.getPatientAppointments()
+                setAppointments(Array.isArray(response?.appointments) ? response.appointments : [])
+            } catch (err) {
+                setError(err?.response?.data?.message || 'Failed to load appointments')
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchAppointments()
+    }, [])
+
+    const formattedAppointments = useMemo(() => {
+        const now = new Date()
+
+        return appointments.map((appointment) => {
+            const appointmentDate = new Date(appointment.appointmentDate)
+            const appointmentDateTime = parseAppointmentDateTime(appointment.appointmentDate, appointment.startTime)
+            const rawStatus = appointment?.status || 'pending'
+
+            const displayStatus =
+                rawStatus === 'completed'
+                    ? 'Completed'
+                    : rawStatus === 'cancelled'
+                        ? 'Cancelled'
+                        : appointmentDateTime >= now
+                            ? 'Pending'
+                            : 'Pending'
+
+            return {
+                id: appointment._id,
+                doctorName: appointment?.doctor?.user?.name || 'Doctor',
+                hospital: appointment?.doctor?.hospital || 'Hospital not added',
+                specialization: appointment?.doctor?.specialization || appointment?.doctor?.department || 'Specialization not added',
+                date: appointmentDate.toLocaleDateString('en-GB', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                }),
+                time: appointment?.startTime || '--',
+                token: appointment?.tokenNumber || '--',
+                status: displayStatus,
+                photo: appointment?.doctor?.profilePic || '',
+                appointmentDateTime,
+                rawStatus,
+            }
+        })
+    }, [appointments])
+
+    const nearestPendingUpcomingAppointment = useMemo(() => {
+        const now = new Date()
+
+        return formattedAppointments
+            .filter((appointment) => appointment.rawStatus === 'pending' && appointment.appointmentDateTime >= now)
+            .sort((a, b) => a.appointmentDateTime - b.appointmentDateTime)[0] || null
+    }, [formattedAppointments])
+
+    const appointmentSummaryStats = useMemo(() => {
+        const now = new Date()
+
+        return formattedAppointments.reduce(
+            (stats, appointment) => {
+                stats.total += 1
+
+                if (appointment.rawStatus === 'completed') {
+                    stats.completed += 1
+                } else if (appointment.rawStatus === 'cancelled') {
+                    stats.cancelled += 1
+                } else if (appointment.appointmentDateTime >= now) {
+                    stats.upcoming += 1
+                }
+
+                return stats
+            },
+            {
+                total: 0,
+                upcoming: 0,
+                completed: 0,
+                cancelled: 0,
+            }
+        )
+    }, [formattedAppointments])
 
 // ==========================================================================================================================================================================
 
@@ -53,14 +129,22 @@ const Dashboard = () => {
         // ============================= DASHBOARD ================================ 
         <div className='p-3 sm:p-6 m-1 sm:m-2'>
             <PatientNav />
-            <UpcomingAppointment />
+            <UpcomingAppointment
+                appointment={nearestPendingUpcomingAppointment}
+                loading={loading}
+                error={error}
+            />
 
             <LiveQueueStatus />
 
             <QuickOptions />
 
 
-            <DashAppointmentSummary />
+            <DashAppointmentSummary
+                stats={appointmentSummaryStats}
+                loading={loading}
+                error={error}
+            />
 
 
 
@@ -71,24 +155,38 @@ const Dashboard = () => {
                 <h2 className="text-lg sm:text-xl font-semibold mb-4">Recent Appointments</h2>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-sm">
-                        <thead>
-                            <tr className="bg-gray-100 text-gray-600 text-xs sm:text-sm">
-                                <th className="p-2 sm:p-3">Doctor</th>
-                                <th className="p-2 sm:p-3 hidden sm:table-cell">Specialization</th>
-                                <th className="p-2 sm:p-3 hidden md:table-cell">Date & Time</th>
-                                <th className="p-2 sm:p-3">Token No.</th>
-                                <th className="p-2 sm:p-3">Status</th>
-                                <th className="p-2 sm:p-3">Action</th>
-                            </tr>
-                        </thead>
+                    {loading ? (
+                        <div className='rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-600'>
+                            Loading appointments...
+                        </div>
+                    ) : error ? (
+                        <div className='rounded-lg bg-red-50 p-6 text-center text-sm text-red-600'>
+                            {error}
+                        </div>
+                    ) : formattedAppointments.length === 0 ? (
+                        <div className='rounded-lg bg-gray-50 p-6 text-center text-sm text-gray-600'>
+                            No appointments found.
+                        </div>
+                    ) : (
+                        <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr className="bg-gray-100 text-gray-600 text-xs sm:text-sm">
+                                    <th className="p-2 sm:p-3">Doctor</th>
+                                    <th className="p-2 sm:p-3 hidden sm:table-cell">Specialization</th>
+                                    <th className="p-2 sm:p-3 hidden md:table-cell">Date & Time</th>
+                                    <th className="p-2 sm:p-3">Token No.</th>
+                                    <th className="p-2 sm:p-3">Status</th>
+                                    <th className="p-2 sm:p-3">Action</th>
+                                </tr>
+                            </thead>
 
-                        <tbody>
-                            {appointments.map((item) => (
-                                <DashRecentAppointments key={item.id} item={item} />
-                            ))}
-                        </tbody>
-                    </table>
+                            <tbody>
+                                {formattedAppointments.map((item) => (
+                                    <DashRecentAppointments key={item.id} item={item} />
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
                 </div>
             </div>
 

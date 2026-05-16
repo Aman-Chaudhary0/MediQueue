@@ -1,6 +1,12 @@
 import React from 'react'
 
 const DashRecentAppointments = ({ item }) => {
+    const statusClasses =
+        item.status === "Completed"
+            ? "bg-green-100 text-green-500"
+            : item.status === "Pending" || item.status === "Upcoming" || item.status === "Confirmed"
+                ? "bg-yellow-100 text-yellow-600"
+                : "bg-red-100 text-red-600"
 
 // ==========================================================================================================================================================================
 
@@ -10,7 +16,7 @@ const DashRecentAppointments = ({ item }) => {
             {/* Doctor Column */}
             <td className="p-2 sm:p-3 flex items-center gap-2 sm:gap-3">
                 <img
-                    src={item.photo}
+                    src={item.photo || 'https://via.placeholder.com/100'}
                     alt={item.doctorName}
                     className="w-8 sm:w-10 h-8 sm:h-10 rounded-full shrink-0"
                 />
@@ -41,13 +47,7 @@ const DashRecentAppointments = ({ item }) => {
             {/* Status */}
             <td className="p-2 sm:p-3">
                 <span
-                    className={`px-2 sm:px-3 py-1 sm:py-2 rounded-xl text-xs sm:text-sm font-bold
-                      ${item.status === "Completed"
-                            ? "bg-green-100 text-green-500 "
-                            : item.status === "Pending"
-                                ? "bg-yellow-100 text-yellow-600"
-                                : "bg-red-100 text-red-600"
-                        }`}
+                    className={`px-2 sm:px-3 py-1 sm:py-2 rounded-xl text-xs sm:text-sm font-bold ${statusClasses}`}
                 >
                     {item.status}
                 </span>

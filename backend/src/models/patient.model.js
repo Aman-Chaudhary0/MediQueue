@@ -25,12 +25,13 @@ const patientSchema = new mongoose.Schema(
       type: String,
       enum: ["male", "female", "other"],
       required: true,
-      default: "N/A"
+      default: "other"
     },
 
     profilepic: {
       type: String,
       required: true,
+      default: "https://via.placeholder.com/100"
     }
   },
   { timestamps: true }

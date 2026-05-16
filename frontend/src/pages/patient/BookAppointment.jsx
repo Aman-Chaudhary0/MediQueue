@@ -1,10 +1,50 @@
 
+import { useEffect, useState } from 'react'
 import DoctorSelection from '../../components/patientComponents/DoctorSelection';
 import ChooseDate from '../../components/patientComponents/ChooseDate';
 import ChooseTimeSlot from '../../components/patientComponents/ChooseTimeSlot';
 import AppointmentSummary from '../../components/patientComponents/AppointmentSummary';
+import authService from '../../api/authService';
 
 const BookAppointment = () => {
+    const [selectedDoctor, setSelectedDoctor] = useState(null)
+    const [selectedDate, setSelectedDate] = useState(new Date())
+    const [availableSlots, setAvailableSlots] = useState([])
+    const [selectedSlot, setSelectedSlot] = useState(null)
+    const [slotsLoading, setSlotsLoading] = useState(false)
+    const [slotsError, setSlotsError] = useState('')
+
+    useEffect(() => {
+        const fetchAvailableSlots = async () => {
+            try {
+                if (!selectedDoctor?._id || !selectedDate) {
+                    setAvailableSlots([])
+                    setSelectedSlot(null)
+                    setSlotsError('')
+                    return
+                }
+
+                setSlotsLoading(true)
+                setSlotsError('')
+
+                const response = await authService.getAvailableSlots(
+                    selectedDoctor._id,
+                    selectedDate.toISOString()
+                )
+
+                setAvailableSlots(Array.isArray(response?.availableSlots) ? response.availableSlots : [])
+                setSelectedSlot(null)
+            } catch (err) {
+                setAvailableSlots([])
+                setSelectedSlot(null)
+                setSlotsError(err?.response?.data?.message || 'Failed to load available slots')
+            } finally {
+                setSlotsLoading(false)
+            }
+        }
+
+        fetchAvailableSlots()
+    }, [selectedDoctor, selectedDate])
 
 
 
@@ -51,13 +91,32 @@ const BookAppointment = () => {
 
 
 
-            <DoctorSelection />
+            <DoctorSelection
+                selectedDoctorId={selectedDoctor?._id}
+                onSelectDoctor={setSelectedDoctor}
+            />
 
-            <ChooseDate />
+            <ChooseDate
+                selectedDate={selectedDate}
+                onChangeDate={setSelectedDate}
+                selectedDoctor={selectedDoctor}
+                availableSlotsCount={availableSlots.length}
+            />
 
-            <ChooseTimeSlot />
+            <ChooseTimeSlot
+                selectedDoctor={selectedDoctor}
+                selectedSlot={selectedSlot}
+                availableSlots={availableSlots}
+                loading={slotsLoading}
+                error={slotsError}
+                onSelectSlot={setSelectedSlot}
+            />
 
-            <AppointmentSummary />
+            <AppointmentSummary
+                selectedDoctor={selectedDoctor}
+                selectedDate={selectedDate}
+                selectedSlot={selectedSlot}
+            />
 
             {/* ========================= IMPORTANT NOTICE ==============================   */}
 

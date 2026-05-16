@@ -2,12 +2,9 @@ import { CalendarCheck, Clock } from 'lucide-react';
 import React from 'react'
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useState } from "react";
 
 
-const ChooseDate = () => {
-
-    const [startDate, setStartDate] = useState(new Date());
+const ChooseDate = ({ selectedDate, onChangeDate, selectedDoctor, availableSlotsCount }) => {
 
 // ==========================================================================================================================================================================
 
@@ -21,8 +18,9 @@ const ChooseDate = () => {
                     <div className='w-full overflow-x-auto rounded-xl bg-white p-2 shadow-sm sm:w-auto sm:p-4'>
                         <DatePicker
                             className='w-full'
-                            selected={startDate}
-                            onChange={(date) => setStartDate(date)}
+                            selected={selectedDate}
+                            onChange={(date) => onChangeDate?.(date)}
+                            minDate={new Date()}
                             inline
                         />
                     </div>
@@ -32,7 +30,7 @@ const ChooseDate = () => {
                         <div className='flex min-h-20 items-center gap-3 rounded-lg bg-green-100 p-3 sm:p-4'>
                             <CalendarCheck className='w-8 sm:w-12 h-8 sm:h-12 text-green-600 shrink-0' />
                             <div>
-                                <h3 className='text-sm sm:text-lg font-semibold text-green-600 wrap-break-words'>{startDate.toDateString()}</h3>
+                                <h3 className='text-sm sm:text-lg font-semibold text-green-600 wrap-break-words'>{selectedDate.toDateString()}</h3>
                                 <p className='text-xs sm:text-sm italic'>Selected Date</p>
                             </div>
                         </div>
@@ -42,7 +40,11 @@ const ChooseDate = () => {
                             <Clock className='w-8 sm:w-12 h-8 sm:h-12 text-orange-600 shrink-0' />
                             <div>
                                 <h3 className='text-sm sm:text-lg font-semibold text-orange-600'>Available Slots</h3>
-                                <p className='text-xs sm:text-sm italic'>12 Slots Available</p>
+                                <p className='text-xs sm:text-sm italic'>
+                                  {selectedDoctor
+                                    ? `${availableSlotsCount} Slots Available`
+                                    : 'Select a doctor first'}
+                                </p>
                             </div>
                         </div>
 

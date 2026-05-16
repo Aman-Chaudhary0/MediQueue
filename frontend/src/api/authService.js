@@ -58,7 +58,18 @@ const authService = {
 
   // Admin: Get all doctors
   getAllDoctors: async () => {
-    const response = await api.get("/admin/doctors");
+    const response = await api.get("/doctor");
+    return response.data;
+  },
+
+  // Appointments: Get available time slots for doctor and date
+  getAvailableSlots: async (doctorId, date) => {
+    const response = await api.get("/appointments/available-slots", {
+      params: {
+        doctorId,
+        date,
+      },
+    });
     return response.data;
   },
 

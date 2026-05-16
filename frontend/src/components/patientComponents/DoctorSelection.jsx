@@ -1,7 +1,48 @@
-import React from 'react'
-import { UserRound, Search } from 'lucide-react'
+import React, { useEffect, useState } from 'react'
+import { CheckCircle2, Search, UserRound } from 'lucide-react'
+import authService from '../../api/authService'
 
-const DoctorSelection = () => {
+const DoctorSelection = ({ selectedDoctorId, onSelectDoctor }) => {
+  const [doctors, setDoctors] = useState([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoading(true)
+        setError('')
+
+        const data = await authService.getAllDoctors()
+        const doctorList = Array.isArray(data?.doctors) ? data.doctors : []
+        setDoctors(doctorList)
+      } catch (err) {
+        setError(err?.response?.data?.message || 'Failed to load doctors')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDoctors()
+  }, [])
+
+  const filteredDoctors = doctors.filter((doctor) => {
+    const query = searchTerm.trim().toLowerCase()
+    if (!query) return true
+
+    const doctorName = doctor?.user?.name?.toLowerCase() || ''
+    const specialization = doctor?.specialization?.toLowerCase() || ''
+    const department = doctor?.department?.toLowerCase() || ''
+    const hospital = doctor?.hospital?.toLowerCase() || ''
+
+    return (
+      doctorName.includes(query) ||
+      specialization.includes(query) ||
+      department.includes(query) ||
+      hospital.includes(query)
+    )
+  })
 
 // ==========================================================================================================================================================================
 
@@ -14,6 +55,8 @@ const DoctorSelection = () => {
           <input
             type="text"
             placeholder='Search by name or speciality'
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
             className='w-full rounded-md border border-gray-300 p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 sm:p-3 sm:text-base'
           />
           <button
@@ -25,22 +68,79 @@ const DoctorSelection = () => {
         </div>
       </div>
 
-      <div className='mb-6 grid grid-cols-1 gap-4 sm:mb-8 sm:grid-cols-2 lg:grid-cols-3'>
-        <div className='rounded-lg bg-white p-4 shadow-md'>
-          <UserRound className='mb-4 h-24 w-full rounded-md object-cover text-gray-400 sm:h-32' />
-          <h2 className='text-center text-sm font-semibold sm:text-lg'>Dr. John Doe</h2>
-          <p className='text-center text-xs text-gray-600 sm:text-sm'>Cardiologist</p>
-          <p className='text-center text-xs text-gray-600 sm:text-sm'>City Hospital</p>
-          <p className='text-center text-xs text-gray-600 sm:text-sm'>10 years experience</p>
+      {loading ? (
+        <div className='rounded-lg bg-white p-6 text-center text-sm text-gray-600 shadow-md'>
+          Loading doctors...
         </div>
+      ) : error ? (
+        <div className='rounded-lg bg-red-50 p-6 text-center text-sm text-red-600 shadow-md'>
+          {error}
+        </div>
+      ) : filteredDoctors.length === 0 ? (
+        <div className='rounded-lg bg-white p-6 text-center text-sm text-gray-600 shadow-md'>
+          No doctors found.
+        </div>
+      ) : (
+        <div className='scrollbar-hide mb-6 flex max-h-128 flex-col gap-4 overflow-y-auto pr-1 sm:mb-8'>
+          {filteredDoctors.map((doctor) => (
+            <div
+              key={doctor._id}
+              className={`flex cursor-pointer flex-col gap-4 rounded-lg border p-4 shadow-md transition hover:-translate-y-1 hover:shadow-lg sm:flex-row sm:items-center ${
+                selectedDoctorId === doctor._id
+                  ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                  : 'border-transparent bg-white'
+              }`}
+              onClick={() => onSelectDoctor?.(doctor)}
+              role='button'
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') onSelectDoctor?.(doctor)
+              }}
+            >
+              {doctor?.profilePic ? (
+                <img
+                  src={doctor.profilePic}
+                  alt={doctor?.user?.name || 'Doctor'}
+                  className='h-32 w-full rounded-md object-cover sm:mb-0 sm:h-24 sm:w-24 sm:shrink-0 sm:rounded-full'
+                />
+              ) : (
+                <div className='flex h-32 items-center justify-center rounded-md bg-gray-100 sm:h-24 sm:w-24 sm:shrink-0 sm:rounded-full'>
+                  <UserRound className='h-16 w-16 text-gray-400' />
+                </div>
+              )}
 
-        <div className='rounded-lg bg-white p-4 shadow-md'>
-          <UserRound className='mb-4 h-24 w-full rounded-md object-cover text-gray-400 sm:h-32' />
-          <h2 className='text-center text-sm font-semibold sm:text-lg'>Dr. Jane Smith</h2>
-          <p className='text-center text-xs text-gray-600 sm:text-sm'>Dermatologist</p>
-          <p className='text-center text-xs text-gray-600 sm:text-sm'>Green Clinic</p>
+              <div className='min-w-0 flex-1'>
+                <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+                  <div>
+                    <div className='flex items-center justify-center gap-2 sm:justify-start'>
+                      <h2 className='text-center text-sm font-semibold sm:text-left sm:text-lg'>
+                      {doctor?.user?.name || 'Doctor'}
+                      </h2>
+                      {selectedDoctorId === doctor._id ? (
+                        <CheckCircle2 className='h-5 w-5 text-blue-600' />
+                      ) : null}
+                    </div>
+                    <p className='text-center text-xs text-gray-600 sm:text-left sm:text-sm'>
+                      {doctor?.specialization || doctor?.department || 'Specialization not added'}
+                    </p>
+                  </div>
+
+                  <p className='text-center text-xs font-medium capitalize text-blue-600 sm:text-right sm:text-sm'>
+                    {doctor?.status || 'active'}
+                  </p>
+                </div>
+
+                <div className='mt-3 grid grid-cols-1 gap-2 text-center text-xs text-gray-600 sm:grid-cols-2 sm:text-left sm:text-sm'>
+                  <p>{doctor?.hospital || 'Hospital not added'}</p>
+                  <p>
+                    {doctor?.experience ? `${doctor.experience} years experience` : 'Experience not added'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import express from "express";
 
 import {
     bookAppointment,
+    getAvailableSlots,
     getPatientAppointments,
     getAppointmentDetails,
     cancelAppointment,
@@ -15,6 +16,9 @@ const router = express.Router();
 
 
 // ================================== PATIENT ROUTES=======================================
+
+// Get available slots for a doctor on a selected date
+router.get("/available-slots", protect, authorizeRoles("patient"), getAvailableSlots);
 
 // book appointment
 router.post("/book", protect, authorizeRoles("patient"), bookAppointment);

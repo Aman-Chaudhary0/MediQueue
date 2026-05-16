@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Patient from "../models/patient.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
@@ -29,6 +30,11 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
       role: "patient",
+    });
+
+    // Auto-create patient profile only for normal registration flow.
+    await Patient.create({
+      user: user._id,
     });
 
     // Generate access and refresh tokens
