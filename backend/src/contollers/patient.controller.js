@@ -3,6 +3,8 @@ import Patient from "../models/patient.model.js";
 import User from "../models/user.model.js";
 import imagekit from "../config/imagekit.js";
 
+
+// GET LOGGED IN PATIENT PROFILE
 export const getMyPatient = async (req, res) => {
   try {
     const patient = await Patient.findOne({ user: req.user._id }).populate("user", "name email");
@@ -23,6 +25,10 @@ export const getMyPatient = async (req, res) => {
     });
   }
 };
+
+
+
+
 
 
 // CREATE PATIENT

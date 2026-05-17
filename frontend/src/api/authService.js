@@ -2,12 +2,21 @@ import api from "./axiosConfig.js";
 
 // AUTH SERVICE
 const authService = {
-  // Register patient
+  // Register patient (OTP sent to email)
   registerPatient: async (name, email, password) => {
     const response = await api.post("/auth/register", {
       name,
       email,
       password,
+    });
+    return response.data;
+  },
+
+  // Verify OTP and finish registration (returns tokens)
+  verifyOtp: async (email, otp) => {
+    const response = await api.post("/auth/verify-otp", {
+      email,
+      otp,
     });
     return response.data;
   },
@@ -20,8 +29,6 @@ const authService = {
     });
     return response.data;
   },
-
-
 
   // Logout
   logout: async () => {
@@ -74,7 +81,14 @@ const authService = {
   },
 
   // Appointments: Book appointment
-  bookAppointment: async (doctorId, appointmentDate, startTime, endTime, reason, notes = "") => {
+  bookAppointment: async (
+    doctorId,
+    appointmentDate,
+    startTime,
+    endTime,
+    reason,
+    notes = ""
+  ) => {
     const response = await api.post("/appointments/book", {
       doctorId,
       appointmentDate,

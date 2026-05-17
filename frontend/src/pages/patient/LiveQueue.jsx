@@ -5,6 +5,7 @@ import QueueSummary from "../../components/patientComponents/QueueSummary";
 import LiveQueueNotification from "../../components/patientComponents/LiveQueueNotification";
 import ImportantInstructions from "../../components/patientComponents/ImportantInstructions";
 import authService from "../../api/authService";
+import { createLiveQueueSocket } from "../../socket/liveQueueSocket";
 
 const REFRESH_MS = 5000;
 
@@ -36,8 +37,28 @@ const LiveQueue = () => {
 
   useEffect(() => {
     fetchStatus();
-    const id = window.setInterval(fetchStatus, REFRESH_MS);
-    return () => window.clearInterval(id);
+
+    const id = window.setInterval(() => {
+      // keep REST fallback to ensure functionality never decreases
+      fetchStatus();
+    }, REFRESH_MS);
+
+    // WS tick is optional; if it fails, polling keeps it working.
+    let socket = null;
+    try {
+      socket = createLiveQueueSocket({
+        token: "",
+        onTick: () => fetchStatus(),
+        onError: () => {},
+      });
+    } catch {
+      // ignore
+    }
+
+    return () => {
+      window.clearInterval(id);
+      socket?.close?.();
+    };
   }, []);
 
   const rows = useMemo(() => {

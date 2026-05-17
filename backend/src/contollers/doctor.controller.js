@@ -92,6 +92,8 @@ export const createDoctorProfile = async (req, res) => {
 };
 
 
+
+
 // GET DOCTOR PROFILE
 export const getDoctorProfile = async (req, res) => {
   try {
@@ -137,6 +139,8 @@ export const getDoctorProfile = async (req, res) => {
 };
 
 
+
+
 // GET CURRENT DOCTOR PROFILE (for logged-in doctor)
 export const getCurrentDoctorProfile = async (req, res) => {
   try {
@@ -164,6 +168,8 @@ export const getCurrentDoctorProfile = async (req, res) => {
     });
   }
 };
+
+
 
 
 // GET ALL DOCTORS
@@ -194,6 +200,8 @@ export const getAllDoctors = async (req, res) => {
     });
   }
 };
+
+
 
 
 // UPDATE DOCTOR PROFILE (by id, admin:any doctor, doctor:self only)
@@ -256,6 +264,8 @@ export const updateDoctorProfile = async (req, res) => {
     });
   }
 };
+
+
 
 
 // UPDATE CURRENT DOCTOR PROFILE (PUT /me)
@@ -321,6 +331,8 @@ export const updateCurrentDoctorProfile = async (req, res) => {
 };
 
 
+
+
 // UPDATE DOCTOR STATUS
 export const updateDoctorStatus = async (req, res) => {
   try {
@@ -361,6 +373,8 @@ export const updateDoctorStatus = async (req, res) => {
 };
 
 
+
+
 // DELETE DOCTOR
 export const deleteDoctor = async (req, res) => {
   try {
@@ -386,6 +400,9 @@ export const deleteDoctor = async (req, res) => {
     });
   }
 };
+
+
+
 
 
 // SEARCH DOCTORS

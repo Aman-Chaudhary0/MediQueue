@@ -2,12 +2,14 @@ import Appointment from "../models/appointment.model.js";
 import Patient from "../models/patient.model.js";
 import Doctor from "../models/docter.model.js";
 
+// keep these in sync with queue.controller.js (queue logic depends on them)
 const SLOT_DURATION_IN_MINUTES = 30;
 const WORKING_HOURS = {
   startMinutes: 9 * 60,
   endMinutes: 17 * 60,
 };
 const EXCLUDED_SLOT_START_TIMES = new Set(["11:00 AM", "2:00 PM"]);
+
 
 const padTime = (value) => String(value).padStart(2, "0");
 
@@ -34,6 +36,8 @@ const getDayRange = (dateValue) => {
   return { startOfDay, endOfDay };
 };
 
+
+// parse "h:mm AM/PM" to minutes from midnight (e.g. "9:30 AM" => 570)
 const parseTimeTo24Hour = (timeValue) => {
   const match = String(timeValue || "").match(/^(\d{1,2}):(\d{2})\s(AM|PM)$/i);
   if (!match) return null;
@@ -48,6 +52,8 @@ const parseTimeTo24Hour = (timeValue) => {
   return { hours, minutes };
 };
 
+
+// get end datetime of appointment by date + end time
 const getAppointmentEndDateTime = (appointmentDateValue, endTime) => {
   const appointmentDate = new Date(appointmentDateValue);
   if (Number.isNaN(appointmentDate.getTime())) return null;
@@ -60,6 +66,7 @@ const getAppointmentEndDateTime = (appointmentDateValue, endTime) => {
   return endDateTime;
 };
 
+// get start datetime of appointment by date + start time
 const getAppointmentStartDateTime = (appointmentDateValue, startTime) => {
   const appointmentDate = new Date(appointmentDateValue);
   if (Number.isNaN(appointmentDate.getTime())) return null;
@@ -72,6 +79,8 @@ const getAppointmentStartDateTime = (appointmentDateValue, startTime) => {
   return startDateTime;
 };
 
+
+// Cancel appointments that have passed their end time but are still marked as pending/confirmed
 const cancelExpiredAppointments = async () => {
   const activeAppointments = await Appointment.find({
     status: {
@@ -143,8 +152,8 @@ const buildDailySlots = () => {
 };
 
 
-// get token no. according to slot
 
+// get token no. according to slot
 const getTokenNumberForSlot = (startTime) => {
   const dailySlots = buildDailySlots();
   const slotIndex = dailySlots.findIndex((slot) => slot.startTime === startTime);
@@ -155,6 +164,7 @@ const getTokenNumberForSlot = (startTime) => {
 
   return `A${slotIndex + 1}`;
 };
+
 
 
 // get available slots
@@ -234,6 +244,8 @@ export const getAvailableSlots = async (req, res) => {
     });
   }
 };
+
+
 
 
 // BOOK APPOINTMENT
@@ -404,6 +416,7 @@ export const getPatientAppointments = async (req, res) => {
 };
 
 
+
 // GET APPOINTMENT STATS FOR CURRENT DOCTOR
 export const getDoctorAppointmentStats = async (req, res) => {
   try {
@@ -481,6 +494,8 @@ export const getDoctorAppointmentStats = async (req, res) => {
 };
 
 
+
+
 // GET TODAY'S UPCOMING PATIENTS FOR CURRENT DOCTOR
 export const getDoctorUpcomingPatients = async (req, res) => {
   try {
@@ -540,6 +555,8 @@ export const getDoctorUpcomingPatients = async (req, res) => {
     });
   }
 };
+
+
 
 
 // GET TODAY'S SCHEDULE FOR CURRENT DOCTOR
@@ -646,6 +663,9 @@ export const getAppointmentDetails = async (req, res) => {
   }
 };
 
+
+
+
 // CANCEL APPOINTMENT
 export const cancelAppointment = async (req, res) => {
   try {
@@ -709,169 +729,6 @@ export const updateAppointmentStatus = async (req, res) => {
       success: true,
       message: "Appointment status updated",
       appointment,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
-
-// ============================ LIVE QUEUE STATUS (PATIENT) ============================
-
-const getTokenNumberIndex = (tokenNumber) => {
-  // token format: A<number> (e.g. A10). Fallback to 0 if invalid.
-  const num = Number(String(tokenNumber || "").replace(/\D/g, "")) || 0;
-  return num;
-};
-
-const computeEstimatedWaiting = (aheadCount, servingTokenIndex) => {
-  // Simple estimate: each appointment = SLOT_DURATION_IN_MINUTES (~30 mins).
-  const baseMinutes = aheadCount * SLOT_DURATION_IN_MINUTES;
-  // Add small uncertainty window.
-  const min = Math.max(0, baseMinutes - 5);
-  const max = Math.max(0, baseMinutes + 10);
-
-  // If currently serving token is ahead, use serving token index just to avoid all-zeros
-  // (keeps estimate non-empty when aheadCount is 0 but system hasn't updated yet).
-  const wiggle = servingTokenIndex ? 0 : 3;
-  return { minMinutes: min + wiggle, maxMinutes: max + wiggle };
-};
-
-export const getLiveQueueStatusForPatient = async (req, res) => {
-  try {
-    await cancelExpiredAppointments();
-
-    const patient = await Patient.findOne({ user: req.user._id }).select("_id");
-    if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient profile not found",
-      });
-    }
-
-    const now = new Date();
-    const { startOfDay, endOfDay } = getDayRange(now);
-
-    // Consider only today's pending/confirmed appointments for queue.
-    // Pick the nearest one that hasn't ended yet.
-    const candidateAppointments = await Appointment.find({
-      patient: patient._id,
-      appointmentDate: { $gte: startOfDay, $lte: endOfDay },
-      status: { $in: ["pending", "confirmed"] },
-    })
-      .select("doctor appointmentDate startTime endTime tokenNumber status")
-      .populate("doctor", "_id");
-
-    const upcomingAppointments = candidateAppointments
-      .map((a) => {
-        const endDateTime = getAppointmentEndDateTime(a.appointmentDate, a.endTime);
-        return { ...a.toObject(), endDateTime };
-      })
-      .filter((a) => a.endDateTime && a.endDateTime >= now)
-      .sort((a, b) => {
-        const aEnd = a.endDateTime ? a.endDateTime.getTime() : 0;
-        const bEnd = b.endDateTime ? b.endDateTime.getTime() : 0;
-        return aEnd - bEnd;
-      });
-
-    const yourAppointment = upcomingAppointments[0] || null;
-    if (!yourAppointment) {
-      return res.status(200).json({
-        success: true,
-        live: false,
-        message: "No active queue found for your next appointment today.",
-      });
-    }
-
-    const doctorId = yourAppointment.doctor;
-
-    // Queue for this doctor today: all pending/confirmed appointments ordered by token.
-    const doctorQueueAppointments = await Appointment.find({
-      doctor: doctorId,
-      appointmentDate: { $gte: startOfDay, $lte: endOfDay },
-      status: { $in: ["pending", "confirmed"] },
-    })
-      .populate({ path: "patient", populate: { path: "user", select: "name" } })
-      .select("appointmentDate startTime endTime tokenNumber status patient");
-
-    const queueSorted = doctorQueueAppointments
-      .map((a) => {
-        const endDateTime = getAppointmentEndDateTime(a.appointmentDate, a.endTime);
-        const startDateTime = getAppointmentStartDateTime(a.appointmentDate, a.startTime);
-        return {
-          ...a.toObject(),
-          endDateTime,
-          startDateTime,
-          tokenIndex: getTokenNumberIndex(a.tokenNumber),
-          patientName: a.patient?.user?.name || "Patient",
-        };
-      })
-      .filter((a) => a.endDateTime && a.endDateTime >= now)
-      .sort((a, b) => {
-        if (a.tokenIndex !== b.tokenIndex) return a.tokenIndex - b.tokenIndex;
-        return String(a.startTime || "").localeCompare(String(b.startTime || ""));
-      });
-
-    const yourTokenIndex = getTokenNumberIndex(yourAppointment.tokenNumber);
-
-    const positionInQueue = queueSorted.findIndex(
-      (a) => getTokenNumberIndex(a.tokenNumber) === yourTokenIndex && String(a.patient?._id || "") === String(patient._id)
-    );
-
-    const yourTokenNumber = yourAppointment.tokenNumber || `A${yourTokenIndex}`;
-    const yourPosition = positionInQueue === -1 ? null : positionInQueue + 1;
-    const aheadCount = positionInQueue === -1 ? null : positionInQueue;
-
-    // Determine currently serving:
-    // - If any appointment is confirmed and now is within [start, end], serve that.
-    // - Else, serve the first pending/confirmed appointment in queueSorted.
-    const currentlyServing = (() => {
-      const inProgress = queueSorted.find((a) => {
-        const startOk = a.startDateTime && a.startDateTime <= now;
-        const endOk = a.endDateTime && a.endDateTime >= now;
-        return a.status === "confirmed" && startOk && endOk;
-      });
-      if (inProgress) return inProgress;
-      return queueSorted[0] || null;
-    })();
-
-    const servingTokenNumber = currentlyServing?.tokenNumber || null;
-    const servingTokenIndex = currentlyServing ? getTokenNumberIndex(currentlyServing.tokenNumber) : 0;
-    const servingPatientName = currentlyServing?.patientName || null;
-
-    const { minMinutes, maxMinutes } = computeEstimatedWaiting(
-      aheadCount == null ? 0 : aheadCount,
-      servingTokenIndex
-    );
-
-    const formattedRange = `${minMinutes}-${maxMinutes} mins`;
-
-    res.status(200).json({
-      success: true,
-      live: true,
-      doctorId,
-      yourTokenNumber,
-      yourPosition,
-      aheadCount,
-      currentlyServing: servingTokenNumber
-        ? {
-            tokenNumber: servingTokenNumber,
-            patientName: servingPatientName,
-            status: currentlyServing.status,
-          }
-        : null,
-      estimatedWaitingTime: {
-        minMinutes,
-        maxMinutes,
-        text: formattedRange,
-      },
-      queue: queueSorted.slice(0, 20).map((a) => ({
-        tokenNumber: a.tokenNumber,
-        patientName: a.patientName,
-        status: a.status === "confirmed" ? "In Progress" : "Waiting",
-      })),
     });
   } catch (error) {
     res.status(500).json({

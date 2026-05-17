@@ -2,9 +2,10 @@ import express from "express";
 
 import {
   register,
+  verifyOtp,
   login,
   logoutUser,
-  refreshTokenController
+  refreshTokenController,
 } from "../contollers/auth.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
@@ -16,6 +17,7 @@ const router = express.Router();
 
 // PUBLIC ROUTES
 router.post("/register", register);
+router.post("/verify-otp", verifyOtp);
 router.post("/login", login);
 router.post("/logout", logoutUser);
 router.post("/refresh-token", refreshTokenController);

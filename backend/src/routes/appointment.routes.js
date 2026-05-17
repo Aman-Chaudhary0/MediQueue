@@ -10,8 +10,9 @@ import {
     getAppointmentDetails,
     cancelAppointment,
     updateAppointmentStatus,
-    getLiveQueueStatusForPatient,
 } from "../contollers/appointment.controller.js";
+
+import { getLiveQueueStatusForPatient } from "../contollers/queue.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";

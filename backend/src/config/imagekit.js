@@ -7,6 +7,7 @@ const {
   IMAGEKIT_URL_ENDPOINT,
 } = process.env;
 
+// Check if all required ImageKit config variables are present
 const hasAllConfig =
   Boolean(IMAGEKIT_PUBLIC_KEY) &&
   Boolean(IMAGEKIT_PRIVATE_KEY) &&
@@ -14,6 +15,7 @@ const hasAllConfig =
 
 let imagekit = null;
 
+// Only initialize ImageKit if all config variables are present
 if (hasAllConfig) {
   imagekit = new ImageKit({
     publicKey: IMAGEKIT_PUBLIC_KEY,

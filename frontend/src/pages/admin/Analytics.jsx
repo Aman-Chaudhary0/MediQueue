@@ -35,6 +35,9 @@ const Analytics = () => {
     ? analytics.doctorPerformance[0]
     : null;
 
+
+
+    // ====================================================================
   return (
     <div className="bg-gray-50 min-h-screen p-6">
       <div className="mb-6">
