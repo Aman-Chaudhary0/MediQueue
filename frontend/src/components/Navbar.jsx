@@ -1,17 +1,46 @@
 import React, { useState } from 'react'
 import { assets } from '../assets/assets'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, LogOut, AlertTriangle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 // 3 sections - logo, list of pages, login/signup and responsive hamburger menu for mobile 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false)
+    const [showLogoutModal, setShowLogoutModal] = useState(false)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
     const navigate = useNavigate()
     const { isAuthenticated, logout } = useAuth()
 
     const toggleMenu = () => {
         setIsOpen(!isOpen)
+    }
+
+    const handleLogout = async () => {
+        try {
+            setIsLoggingOut(true)
+            const response = await fetch('http://localhost:3000/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            
+            if (!response.ok) {
+                throw new Error('Logout failed')
+            }
+            
+            logout()
+            setShowLogoutModal(false)
+            setIsOpen(false)
+            navigate('/')
+        } catch (err) {
+            console.error('Logout failed:', err)
+            alert('Logout failed. Please try again.')
+        } finally {
+            setIsLoggingOut(false)
+        }
     }
 
 
@@ -54,12 +83,10 @@ const Navbar = () => {
                                 Home
                             </button>
                             <button
-                                onClick={() => {
-                                    logout()
-                                    navigate('/')
-                                }}
-                                className='text-blue-600 hover:text-blue-800 border border-blue-600 py-2 px-4 text-sm rounded-md transition-colors'
+                                onClick={() => setShowLogoutModal(true)}
+                                className='text-blue-600 hover:text-blue-800 border border-blue-600 py-2 px-4 text-sm rounded-md transition-colors flex items-center gap-2'
                             >
+                                <LogOut size={16} />
                                 Logout
                             </button>
                         </>
@@ -117,12 +144,10 @@ const Navbar = () => {
                                     Home
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        logout()
-                                        navigate('/')
-                                    }}
-                                    className='w-full text-blue-600 border border-blue-600 py-2 px-4 text-sm rounded-md hover:bg-blue-50 transition-colors'
+                                    onClick={() => setShowLogoutModal(true)}
+                                    className='w-full text-blue-600 border border-blue-600 py-2 px-4 text-sm rounded-md hover:bg-blue-50 transition-colors flex items-center justify-center gap-2'
                                 >
+                                    <LogOut size={16} />
                                     Logout
                                 </button>
                             </>
@@ -142,6 +167,38 @@ const Navbar = () => {
                                 </button>
                             </>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg shadow-lg p-6 max-w-sm mx-4">
+                        <div className="flex items-center gap-3 mb-4">
+                            <AlertTriangle className="text-red-600" size={24} />
+                            <h2 className="text-lg font-semibold text-gray-800">Logout?</h2>
+                        </div>
+                        <p className="text-gray-600 mb-6">Are you sure you want to logout? You'll need to login again to access your account.</p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowLogoutModal(false)}
+                                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                disabled={isLoggingOut}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className={`px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center gap-2 ${
+                                    isLoggingOut ? 'opacity-70 cursor-not-allowed' : ''
+                                }`}
+                                disabled={isLoggingOut}
+                            >
+                                <LogOut size={16} />
+                                {isLoggingOut ? 'Logging out...' : 'Logout'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

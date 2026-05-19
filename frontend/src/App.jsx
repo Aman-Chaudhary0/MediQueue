@@ -15,6 +15,7 @@ import DoctorProfile from './pages/doctor/DoctorProfile'
 import PatientProfile from './pages/patient/PatientProfile'
 import AppointmentDetails from './pages/patient/AppointmentDetails'
 import Analytics from './pages/admin/Analytics'
+import NotFound from './pages/public/NotFound'
 import { Route, Routes } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -60,6 +61,8 @@ const App = () => {
         <Route path='/admin/analytics' element={<ProtectedRoute requiredRoles={['admin']}><Analytics /></ProtectedRoute>} />
         {/* AdminProfile route removed (admin profile page deleted) */}
 
+        {/* 404 Not Found - Catch all invalid routes */}
+        <Route path='*' element={<NotFound />} />
 
       </Routes>
 

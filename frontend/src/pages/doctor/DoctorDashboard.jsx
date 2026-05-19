@@ -193,9 +193,7 @@ const DoctorDashboard = () => {
                     <h2 className="text-lg font-semibold text-gray-800">
                         Today's Schedule
                     </h2>
-                    <button className="text-blue-600 text-sm font-medium hover:underline">
-                        View Calendar
-                    </button>
+                  
                 </div>
 
                 <div className="relative">
