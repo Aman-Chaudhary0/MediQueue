@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
 import AuthHeader from "../../components/common/AuthHeader";
@@ -17,9 +17,9 @@ const Register = () => {
     else navigate("/", { replace: true });
   }, [isAuthenticated, user, navigate]);
 
-  
   if (isAuthenticated) return null;
 
+  
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -39,6 +39,23 @@ const Register = () => {
   const [otpError, setOtpError] = useState("");
   const [otpSuccess, setOtpSuccess] = useState("");
 
+  // Flow state: user can "Register" only after OTP verified
+  const [emailVerified, setEmailVerified] = useState(false);
+
+  const isEmailValid = useMemo(() => {
+    if (!formData.email) return false;
+    // Lightweight validation; backend still validates strictly
+    return /\S+@\S+\.\S+/.test(formData.email);
+  }, [formData.email]);
+
+  const isFormValidForOtp = useMemo(() => {
+    // Backend /auth/register needs name, email, password (OTP stored but user not created yet)
+    if (!formData.name || !formData.email || !formData.password || !formData.confirm_password) return false;
+    if (formData.password !== formData.confirm_password) return false;
+    if (formData.password.length < 6) return false;
+    return isEmailValid;
+  }, [formData, isEmailValid]);
+
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData((prev) => ({
@@ -46,31 +63,29 @@ const Register = () => {
       [id]: value,
     }));
     setError("");
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
     setSuccess("");
 
-    // Validation
-    if (!formData.name || !formData.email || !formData.password || !formData.confirm_password) {
-      setError("All fields are required");
-      return;
+    // If user edits email/name/password after verifying, require re-verification
+    if (id === "email" || id === "name" || id === "password" || id === "confirm_password") {
+      setEmailVerified(false);
     }
+  };
 
-    if (formData.password !== formData.confirm_password) {
-      setError("Passwords do not match");
-      return;
-    }
+  const openOtpModalAndSendOtp = async (e) => {
+    e?.preventDefault?.();
+    setError("");
+    setSuccess("");
+    setOtpError("");
+    setOtpSuccess("");
 
-    if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (!isFormValidForOtp) {
+      setError("Please enter a valid name, email, and matching password before verifying.");
       return;
     }
 
     setLoading(true);
     try {
+      // This triggers OTP send + stores otp payload in OtpRegistration.
       const response = await authService.registerPatient(
         formData.name,
         formData.email,
@@ -78,20 +93,20 @@ const Register = () => {
       );
 
       if (response.success) {
-        setSuccess("OTP sent to your email. Please verify.");
+        setSuccess("OTP sent. Enter OTP to finish registration.");
         setPendingEmail(formData.email);
         setOtpValue("");
         setOtpError("");
         setOtpSuccess("");
         setOtpOpen(true);
       } else {
-        setError(response.message || "Registration failed. Please try again.");
+        setError(response.message || "Could not send OTP. Please try again.");
       }
     } catch (err) {
       const errorMessage =
         err.response?.data?.message ||
         err.response?.data?.error ||
-        "Registration failed. Please try again.";
+        "Failed to verify email. Please try again.";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -116,9 +131,10 @@ const Register = () => {
         // Backend sets cookies + returns accessToken
         login(response.user, response.accessToken);
 
+        setEmailVerified(true);
         setOtpSuccess("OTP verified! Redirecting...");
         setTimeout(() => {
-          navigate("/patient/dashboard", { replace: true });
+          window.location.href = "/patient/dashboard";
         }, 600);
       } else {
         setOtpError(response.message || "Invalid OTP.");
@@ -158,7 +174,7 @@ const Register = () => {
               Create Account
             </h2>
             <p className="text-xs sm:text-sm italic mb-4 sm:mb-6 text-center">
-              Fill in the details to get started
+              Verify your email using OTP to finish registration
             </p>
 
             {error && (
@@ -173,7 +189,7 @@ const Register = () => {
               </div>
             )}
 
-            <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-4 sm:space-y-6" onSubmit={(e) => e.preventDefault()}>
               <div>
                 <label htmlFor="name" className="block text-xs sm:text-sm font-medium text-gray-700">
                   Full Name
@@ -193,15 +209,29 @@ const Register = () => {
                 <label htmlFor="email" className="block text-xs sm:text-sm font-medium text-gray-700">
                   Email Address
                 </label>
-                <input
-                  placeholder="Enter Your Email"
-                  type="email"
-                  id="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  className="w-full mt-1 p-2 sm:p-3 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
+
+                <div className="flex gap-2 mt-1">
+                  <input
+                    placeholder="Enter Your Email"
+                    type="email"
+                    id="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="flex-1 p-2 sm:p-3 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={openOtpModalAndSendOtp}
+                    disabled={loading || !isFormValidForOtp}
+                    className="shrink-0 bg-blue-600 text-white px-3 sm:px-4 py-2 sm:py-3 text-sm sm:text-base rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    aria-label="Verify Email"
+                    title="Send OTP to this email"
+                  >
+                    {loading ? "Sending..." : emailVerified ? "Verified" : "Verify"}
+                  </button>
+                </div>
               </div>
 
               <div>
@@ -240,11 +270,18 @@ const Register = () => {
 
               <div className="flex items-center justify-between">
                 <button
-                  type="submit"
-                  disabled={loading}
+                  type="button"
+                  onClick={() => {
+                    if (emailVerified) {
+                      navigate("/patient/dashboard", { replace: true });
+                    } else {
+                      setError("Please verify your email using OTP before registering.");
+                    }
+                  }}
+                  disabled={!emailVerified}
                   className="w-full bg-blue-600 text-white py-2 sm:py-3 px-4 text-sm sm:text-base rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Registering..." : "Register"}
+                  {emailVerified ? "Registered ✓" : "Register (after OTP verification)"}
                 </button>
               </div>
 
@@ -267,7 +304,11 @@ const Register = () => {
             <p className="text-xs sm:text-sm mb-3">
               Contact an administrator to create your account
             </p>
-            <button className="w-full bg-gray-600 text-white py-2 sm:py-3 px-4 text-sm sm:text-base rounded-md hover:bg-gray-700 transition-colors">
+            <button
+              type="button"
+              onClick={() => navigate("/contact-us")}
+              className="w-full bg-gray-600 text-white py-2 sm:py-3 px-4 text-sm sm:text-base rounded-md hover:bg-gray-700 transition-colors"
+            >
               Contact Admin
             </button>
           </div>
@@ -338,7 +379,7 @@ const Register = () => {
               </button>
 
               <p className="text-center text-xs text-gray-500">
-                Didn’t receive OTP? (Backend currently only sends OTP on new registration.)
+                Didn’t receive OTP? (OTP is sent on clicking Verify.)
               </p>
             </form>
           </div>

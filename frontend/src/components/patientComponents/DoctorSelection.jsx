@@ -1,33 +1,80 @@
-import React, { useEffect, useState } from 'react'
-import { CheckCircle2, Search, UserRound } from 'lucide-react'
+import React, { useEffect, useState, useRef, useCallback } from 'react'
+import { CheckCircle2, Search, UserRound, Loader } from 'lucide-react'
 import authService from '../../api/authService'
 
 const DoctorSelection = ({ selectedDoctorId, onSelectDoctor }) => {
-  const [doctors, setDoctors] = useState([])
+  const [allDoctors, setAllDoctors] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const scrollContainerRef = useRef(null)
+  const DOCTORS_PER_PAGE = 10
 
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      try {
+  // Fetch doctors with pagination
+  const fetchDoctors = useCallback(async (pageNum = 1) => {
+    try {
+      if (pageNum === 1) {
         setLoading(true)
-        setError('')
-
-        const data = await authService.getAllDoctors()
-        const doctorList = Array.isArray(data?.doctors) ? data.doctors : []
-        setDoctors(doctorList)
-      } catch (err) {
-        setError(err?.response?.data?.message || 'Failed to load doctors')
-      } finally {
-        setLoading(false)
+      } else {
+        setIsLoadingMore(true)
       }
-    }
+      setError('')
 
-    fetchDoctors()
+      const data = await authService.getAllDoctors()
+      const doctorList = Array.isArray(data?.doctors) ? data.doctors : []
+      
+      // Calculate pagination
+      const startIndex = (pageNum - 1) * DOCTORS_PER_PAGE
+      const endIndex = startIndex + DOCTORS_PER_PAGE
+      const paginatedDoctors = doctorList.slice(startIndex, endIndex)
+      
+      if (pageNum === 1) {
+        setAllDoctors(paginatedDoctors)
+      } else {
+        setAllDoctors(prev => [...prev, ...paginatedDoctors])
+      }
+      
+      // Check if there are more doctors to fetch
+      setHasMore(endIndex < doctorList.length)
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to load doctors')
+    } finally {
+      setLoading(false)
+      setIsLoadingMore(false)
+    }
   }, [])
 
-  const filteredDoctors = doctors.filter((doctor) => {
+  // Initial fetch
+  useEffect(() => {
+    fetchDoctors(1)
+  }, [])
+
+  // Handle scroll to load more
+  const handleScroll = useCallback(() => {
+    if (!scrollContainerRef.current || isLoadingMore || !hasMore) return
+
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
+    const scrolledPercentage = (scrollTop + clientHeight) / scrollHeight
+
+    // Load more when user scrolls to 80% or more
+    if (scrolledPercentage > 0.8) {
+      setPage(prev => prev + 1)
+      fetchDoctors(page + 1)
+    }
+  }, [isLoadingMore, hasMore, page, fetchDoctors])
+
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener('scroll', handleScroll)
+      return () => container.removeEventListener('scroll', handleScroll)
+    }
+  }, [handleScroll])
+
+  const filteredDoctors = allDoctors.filter((doctor) => {
     const query = searchTerm.trim().toLowerCase()
     if (!query) return true
 
@@ -81,7 +128,10 @@ const DoctorSelection = ({ selectedDoctorId, onSelectDoctor }) => {
           No doctors found.
         </div>
       ) : (
-        <div className='scrollbar-hide mb-6 flex max-h-128 flex-col gap-4 overflow-y-auto pr-1 sm:mb-8'>
+        <div 
+          ref={scrollContainerRef}
+          className='scrollbar-hide mb-6 flex max-h-128 flex-col gap-4 overflow-y-auto pr-1 sm:mb-8'
+        >
           {filteredDoctors.map((doctor) => (
             <div
               key={doctor._id}
@@ -139,6 +189,13 @@ const DoctorSelection = ({ selectedDoctorId, onSelectDoctor }) => {
               </div>
             </div>
           ))}
+
+          {/* Loading indicator for more doctors */}
+          {isLoadingMore && (
+            <div className='flex justify-center py-4'>
+              <Loader className='h-5 w-5 animate-spin text-blue-600' />
+            </div>
+          )}
         </div>
       )}
     </div>

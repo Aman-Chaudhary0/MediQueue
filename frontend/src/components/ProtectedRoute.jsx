@@ -1,12 +1,23 @@
 import React from 'react'
 import { Navigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 const ProtectedRoute = ({ children, requiredRoles = [] }) => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const { isAuthenticated, user, loading } = useAuth()
     const token = localStorage.getItem('accessToken')
 
-    // No token, redirect to login
-    if (!token) {
+    // If loading but token exists, show children (token was just set by login)
+    if (loading && token) {
+        return children
+    }
+
+    // Still loading auth state and no token
+    if (loading) {
+        return <div></div>
+    }
+
+    // No authentication, redirect to login
+    if (!isAuthenticated || !token) {
         return <Navigate to="/login" replace />
     }
 
@@ -16,7 +27,7 @@ const ProtectedRoute = ({ children, requiredRoles = [] }) => {
     }
 
     // Check if user role matches required roles
-    if (requiredRoles.includes(user.role)) {
+    if (requiredRoles.includes(user?.role)) {
         return children
     }
 

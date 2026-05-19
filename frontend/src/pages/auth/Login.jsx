@@ -52,11 +52,11 @@ const Login = () => {
                 // Redirect based on role
                 setTimeout(() => {
                     if (response.user.role === 'admin') {
-                        navigate('/admin/dashboard')
+                        window.location.href = '/admin/dashboard'
                     } else if (response.user.role === 'doctor') {
-                        navigate('/doctor/dashboard')
+                        window.location.href = '/doctor/dashboard'
                     } else if (response.user.role === 'patient') {
-                        navigate('/patient/dashboard')
+                        window.location.href = '/patient/dashboard'
                     }
                 }, 1500)
             }

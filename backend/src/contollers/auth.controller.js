@@ -2,11 +2,25 @@ import User from "../models/user.model.js";
 import Patient from "../models/patient.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import dns from "dns";
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken.js";
 import { sendMail } from "../utils/email.js";
 import OtpRegistration from "../models/otp.model.js";
 import { compareOtp, generateNumericOtp, hashOtp, isValidEmail } from "../utils/otp.js";
 
+
+async function hasMailServerForDomain(email) {
+  const domain = email.split("@")[1]?.trim().toLowerCase();
+  if (!domain) return false;
+
+  try {
+    // If no MX records, domain likely won't accept mail.
+    const mx = await dns.promises.resolveMx(domain);
+    return Array.isArray(mx) && mx.length > 0;
+  } catch {
+    return false;
+  }
+}
 
 // REGISTER (OTP-based, valid emails only)
 export const register = async (req, res) => {
@@ -30,6 +44,15 @@ export const register = async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "User already exists" });
+    }
+
+    // Domain check: only send OTP if the domain has mail servers (MX records)
+    const ok = await hasMailServerForDomain(email);
+    if (!ok) {
+      return res.status(400).json({
+        success: false,
+        message: "Email domain not found. Please enter a valid email address.",
+      });
     }
 
     // Hash password for later account creation (after OTP verification)
@@ -63,7 +86,7 @@ export const register = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "OTP sent to your email",
+      message: "If the email address is correct, OTP has been sent. Please check your inbox.",
       email,
     });
   } catch (error) {
@@ -113,6 +136,7 @@ export const login = async (req, res) => {
       sameSite: 'strict',
       maxAge: 15 * 60 * 1000, // 15 minutes
     });
+    
 
     // Set refresh token in httpOnly cookie (7 days)
     res.cookie('refreshToken', refreshToken, {
@@ -189,12 +213,21 @@ export const verifyOtp = async (req, res) => {
     }
 
     const otpRecord = await OtpRegistration.findOne({ email });
+
+    // If OTP isn't in DB, treat it as "OTP not requested / invalid email / expired"
+    // (This avoids leaking account-existence info; client can still show a generic warning.)
     if (!otpRecord) {
-      return res.status(400).json({ success: false, message: "OTP not found or expired" });
+      return res.status(400).json({
+        success: false,
+        message: "OTP not found or expired. Please click Verify again to resend OTP.",
+      });
     }
 
     if (otpRecord.expiresAt.getTime() < Date.now()) {
-      return res.status(400).json({ success: false, message: "OTP expired" });
+      return res.status(400).json({
+        success: false,
+        message: "OTP expired. Please click Verify again to resend OTP.",
+      });
     }
 
     const isOtpValid = compareOtp({ otp, otpHash: otpRecord.otpHash });

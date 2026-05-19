@@ -1,11 +1,13 @@
 import { Clock } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { assets } from "../../assets/assets";
 import authService from "../../api/authService";
 
 const REFRESH_MS = 5000;
 
 const LiveQueueStatus = () => {
+  const navigate = useNavigate()
   const [queue, setQueue] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -98,7 +100,9 @@ const LiveQueueStatus = () => {
           </div>
         ) : null}
 
-        <button className="w-full sm:w-auto text-blue-600 px-4 py-2 text-sm sm:text-base rounded hover:bg-blue-600 hover:text-white transition duration-300 border-2 border-blue-600 font-semibold">
+        <button 
+          onClick={() => navigate('/patient/live-queue')}
+          className="w-full sm:w-auto text-blue-600 px-4 py-2 text-sm sm:text-base rounded hover:bg-blue-600 hover:text-white transition duration-300 border-2 border-blue-600 font-semibold">
           View Live Queue
         </button>
       </div>
@@ -109,7 +113,9 @@ const LiveQueueStatus = () => {
           alt="Hospital Lobby"
           className="w-full h-48 sm:h-64 object-cover rounded-lg shadow-md"
         />
-        <button className="absolute top-2 right-2 bg-red-200 text-red-600 text-xs sm:text-sm px-2 sm:px-3 py-1 rounded hover:bg-red-400 transition duration-300">
+        <button 
+          onClick={() => navigate('/patient/live-queue')}
+          className="absolute top-2 right-2 bg-red-200 text-red-600 text-xs sm:text-sm px-2 sm:px-3 py-1 rounded hover:bg-red-400 transition duration-300">
           Live
         </button>
       </div>

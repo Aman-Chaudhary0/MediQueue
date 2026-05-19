@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { LogOut } from 'lucide-react'
 
 const DoctorProfile = () => {
   const { user, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
   const fileInputRef = useRef(null)
   const accessToken = user?.accessToken || localStorage.getItem('accessToken') || ''
 
@@ -33,6 +36,7 @@ const DoctorProfile = () => {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState('')
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const openFilePicker = () => {
     if (fileInputRef.current) {
@@ -191,6 +195,25 @@ const DoctorProfile = () => {
     }
   }
 
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      await fetch('http://localhost:3000/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      localStorage.removeItem('accessToken')
+      localStorage.removeItem('user')
+      navigate('/auth/login')
+    } catch (err) {
+      console.error('Logout failed:', err)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
 // ==========================================================================================================================================================================
 
@@ -376,6 +399,18 @@ const DoctorProfile = () => {
             disabled={saving}
           >
             {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+
+          <button
+            className={`px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center gap-2 ${
+              isLoggingOut ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
+            type='button'
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            <LogOut size={18} />
+            {isLoggingOut ? 'Logging out...' : 'Logout'}
           </button>
         </div>
       </div>
