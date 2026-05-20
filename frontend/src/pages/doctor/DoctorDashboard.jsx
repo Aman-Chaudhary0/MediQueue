@@ -150,8 +150,21 @@ const DoctorDashboard = () => {
         <div className='mx-auto max-w-7xl px-4 py-4 sm:px-6'>
             <DoctorNav />
 
+            {/* Quick Navigation */}
+            <div className="mb-6 flex justify-end">
+                <button
+                    type="button"
+                    onClick={() => window.location.assign('/doctor/queue-management')}
+                    className="border border-blue-600 text-blue-600 bg-white hover:bg-blue-600 hover:text-white transition-colors px-4 py-2 rounded-lg text-sm font-medium"
+                >
+                    Queue Management
+                </button>
+            </div>
+
+
 
             <DocAppointmentsInfo />
+
 
 
             {/* ================================ Upcoming Patients =============================== */}

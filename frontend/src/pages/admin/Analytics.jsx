@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import authService from "../../api/authService";
 import AdminAppointmentsInfo from "../../components/adminComponents/AdminAppointmentsInfo";
 import AnalyticsCharts from "../../components/adminComponents/AnalyticsCharts";
 
 const Analytics = () => {
+  const navigate = useNavigate();
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -40,6 +43,17 @@ const Analytics = () => {
     // ====================================================================
   return (
     <div className="bg-gray-50 min-h-screen p-6">
+      {/* Back Button */}
+      <div className="mb-4 flex items-center gap-2">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span className="text-sm font-medium">Back to Dashboard</span>
+        </button>
+      </div>
+
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-gray-800">
           Analytics Dashboard

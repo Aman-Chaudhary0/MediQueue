@@ -11,6 +11,7 @@ const QueueManageNav = () => {
 
             </div>
   )
+
 }
 
 export default QueueManageNav

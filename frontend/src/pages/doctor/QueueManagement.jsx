@@ -171,9 +171,22 @@ const QueueManagement = () => {
 
     return (
         <div className='mx-auto max-w-7xl p-4 sm:p-6'>
+            {/* Back Button */}
+            <div className='mb-4 flex items-center gap-2'>
+                <button
+                    type='button'
+                    onClick={() => window.location.assign('/doctor/dashboard')}
+                    className='flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors'
+                >
+                    <span aria-hidden>←</span>
+                    <span className='text-sm font-medium'>Back to Dashboard</span>
+                </button>
+            </div>
+
             <QueueManageNav />
 
             <DocAppointmentsInfo />
+
 
             <CurrentPatient
                 patient={currentPatient}

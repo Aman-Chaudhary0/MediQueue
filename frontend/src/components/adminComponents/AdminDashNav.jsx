@@ -1,14 +1,47 @@
-import { Bell, Search } from 'lucide-react'
-import React from 'react'
+import { LogOut } from 'lucide-react'
+import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { assets } from '../../assets/assets'
+import authService from '../../api/authService'
 
 const AdminDashNav = () => {
   const navigate = useNavigate()
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true)
+    setConfirmLogout(false)
+  }
+
+  const handleConfirmLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      await authService.logout()
+      // Clear any stored auth data
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      sessionStorage.clear()
+      navigate('/login')
+    } catch (err) {
+      console.error('Logout failed:', err)
+      // Still navigate to login even if logout API fails
+      navigate('/login')
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
+  const handleCloseModal = () => {
+    setIsLogoutModalOpen(false)
+    setConfirmLogout(false)
+  }
 
 // ==========================================================================================================================================================================
 
   return (
+    <>
     <nav className="flex w-full justify-between gap-4 rounded-2xl border border-gray-100 bg-white px-4 py-4 shadow-sm sm:px-6 lg:flex-row lg:items-center lg:justify-between">
 
                 {/* Left Section */}
@@ -49,13 +82,6 @@ const AdminDashNav = () => {
                  
 
                     <div className="flex items-center justify-between gap-3 sm:justify-start">
-                        {/* Notification Icon */}
-                        <button className="relative rounded-xl bg-gray-50 p-3 transition hover:bg-gray-100">
-                            <Bell size={20} className="text-gray-700" />
-
-                            {/* Notification Dot */}
-                            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span>
-                        </button>
 
                         {/* Profile Tab */}
                         <div
@@ -77,10 +103,65 @@ const AdminDashNav = () => {
                                 </p>
                             </div>
                         </div>
+
+                        {/* Logout Button */}
+                        <button
+                          type="button"
+                          onClick={handleLogoutClick}
+                          className="flex items-center gap-2 rounded-xl bg-red-50 px-3 py-2 text-red-600 transition hover:bg-red-100"
+                          title="Logout"
+                        >
+                          <LogOut size={18} />
+                          <span className="text-xs font-medium">Logout</span>
+                        </button>
                     </div>
 
                 </div>
             </nav>
+
+            {/* Logout Confirmation Modal */}
+            {isLogoutModalOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg sm:w-96">
+                  <h2 className="mb-2 text-lg font-semibold text-gray-800">Confirm Logout</h2>
+                  <p className="mb-6 text-sm text-gray-600">
+                    {!confirmLogout
+                      ? 'Are you sure you want to logout?'
+                      : 'Click confirm again to logout.'}
+                  </p>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCloseModal}
+                      disabled={isLoggingOut}
+                      className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                    {!confirmLogout ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmLogout(true)}
+                        className="flex-1 rounded-lg bg-yellow-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-yellow-600"
+                      >
+                        Yes, I'm sure
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleConfirmLogout}
+                        disabled={isLoggingOut}
+                        className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-50"
+                      >
+                        {isLoggingOut ? 'Logging out...' : 'Confirm Logout'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+            </>
   )
 }
 

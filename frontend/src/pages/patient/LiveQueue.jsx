@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import LiveQueueCard from "../../components/patientComponents/LiveQueueCard";
 import QueueStatusCard from "../../components/patientComponents/QueueStatusCard";
 import QueueSummary from "../../components/patientComponents/QueueSummary";
@@ -16,6 +18,7 @@ const getStatusStyle = (status) => {
 };
 
 const LiveQueue = () => {
+  const navigate = useNavigate();
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -68,6 +71,19 @@ const LiveQueue = () => {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+      {/* Back Button */}
+      <div className="mb-4 flex items-center gap-2">
+        <button
+          onClick={() => navigate('/patient/dashboard')}
+          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+        >
+          <ArrowLeft size={20} />
+          <span className="text-sm font-medium">Back to Dashboard</span>
+        </button>
+      </div>
+
+
+
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex flex-col">
           <h1 className="text-2xl sm:text-3xl font-semibold text-gray-800">
@@ -136,7 +152,7 @@ const LiveQueue = () => {
       </section>
 
       <QueueSummary />
-      <LiveQueueNotification />
+      {/* <LiveQueueNotification /> */}
       <ImportantInstructions />
     </div>
   );

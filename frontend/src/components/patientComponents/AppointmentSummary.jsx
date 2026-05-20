@@ -9,6 +9,10 @@ const AppointmentSummary = ({ selectedDoctor, selectedDate, selectedSlot }) => {
 
     const canBook = selectedDoctor && selectedDate && selectedSlot
 
+    const navigateToDashboard = () => {
+        window.location.assign('/patient/dashboard')
+    }
+
     const handleBookAppointment = async () => {
         try {
             if (!canBook) {
@@ -30,6 +34,7 @@ const AppointmentSummary = ({ selectedDoctor, selectedDate, selectedSlot }) => {
             )
 
             setSuccess('Appointment booked successfully.')
+            navigateToDashboard()
         } catch (err) {
             setError(err?.response?.data?.message || 'Failed to book appointment')
         } finally {
@@ -37,7 +42,8 @@ const AppointmentSummary = ({ selectedDoctor, selectedDate, selectedSlot }) => {
         }
     }
 
-// ==========================================================================================================================================================================
+
+// ========================================================================================================================
 
     return (
         <div className='mb-8 rounded-2xl border-t border-gray-300 p-4 shadow-2xl sm:p-8'>

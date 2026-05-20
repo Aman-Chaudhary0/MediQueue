@@ -237,11 +237,12 @@ const AppointmentDetails = () => {
 
                             <button
                                 type="button"
-                                onClick={() => navigate(-1)}
+                                onClick={() => navigate('/patient/appointment-history')}
                                 className="px-5 py-2 rounded-lg border text-gray-600 hover:bg-gray-100"
                             >
-                                Back
+                                Back to Appointment History
                             </button>
+
                         </div>
                     </div>
                 </>

@@ -75,13 +75,6 @@ const DoctorNav = () => {
       </div>
 
       <div className='flex items-center justify-between gap-3 sm:justify-start'>
-        <button
-          className='relative rounded-xl bg-gray-50 p-3 transition hover:bg-gray-100'
-          type='button'
-        >
-          <Bell size={20} className='text-gray-700' />
-          <span className='absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500'></span>
-        </button>
 
         <div
           onClick={() => navigate('/doctor/profile')}

@@ -361,23 +361,20 @@ const PatientProfile = () => {
           </div>
         </div>
 
+        {/* Back Button (same style as Book Appointment page) */}
+        <div className="mb-4 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/patient/dashboard")}
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            <span aria-hidden>←</span>
+            <span className="text-sm font-medium">Back to Dashboard</span>
+          </button>
+        </div>
+
         {/* Buttons */}
         <div className="flex justify-end gap-4 mt-8">
-          <button
-            className="px-5 py-2 rounded-lg border text-gray-600 hover:bg-gray-100"
-            type="button"
-            disabled={saving}
-            onClick={() => {
-              setSaveError("");
-              setSaveSuccess("");
-              setSelectedFile(null);
-              setUploadPreviewUrl("");
-              navigate("/patient/dashboard");
-            }}
-          >
-            Cancel
-          </button>
-
           <button
             className={`px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 ${
               saving ? "opacity-70 cursor-not-allowed" : ""
@@ -388,6 +385,7 @@ const PatientProfile = () => {
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
+
 
           <button
             className={`px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 flex items-center gap-2 ${

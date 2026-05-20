@@ -156,9 +156,27 @@ const authService = {
     return response.data;
   },
 
-  // Admin: doctors list
-  getAdminDoctors: async () => {
-    const response = await api.get("/admin/doctors");
+  // Admin: doctors list with pagination and search
+  getAdminDoctors: async (page = 1, limit = 10, search = "") => {
+    const response = await api.get("/admin/doctors", {
+      params: {
+        page,
+        limit,
+        search,
+      },
+    });
+    return response.data;
+  },
+
+  // Search doctors by specialization, department, or hospital
+  searchDoctors: async (query, page = 1, limit = 10) => {
+    const response = await api.get("/doctor/search", {
+      params: {
+        query,
+        page,
+        limit,
+      },
+    });
     return response.data;
   },
 

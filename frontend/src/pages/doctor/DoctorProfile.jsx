@@ -227,9 +227,22 @@ const DoctorProfile = () => {
 
   return (
     <div className='bg-gray-50 min-h-screen p-6'>
+      {/* Back Button */}
+      <div className='mb-4 flex items-center gap-2'>
+        <button
+          type='button'
+          onClick={() => window.location.assign('/doctor/dashboard')}
+          className='flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors'
+        >
+          <span aria-hidden>←</span>
+          <span className='text-sm font-medium'>Back to Dashboard</span>
+        </button>
+      </div>
+
       <div className='mb-6'>
         <h1 className='text-2xl font-semibold text-gray-800'>Edit Doctor Profile</h1>
         <p className='text-gray-500 text-sm'>Update your personal information</p>
+
 
         {loading ? (
           <p className='text-sm text-gray-600 mt-2'>Loading...</p>

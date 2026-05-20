@@ -1,5 +1,6 @@
-import { Calendar, CircleCheck, CircleX, Clock, Search, Loader } from 'lucide-react'
+import { Calendar, CircleCheck, CircleX, Clock, Search, Loader, ArrowLeft } from 'lucide-react'
 import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import RecentAppointments from '../../components/patientComponents/RecentAppointments'
 import authService from '../../api/authService'
 
@@ -8,6 +9,7 @@ import authService from '../../api/authService'
 
 
 const AppointmentHistory = () => {
+    const navigate = useNavigate()
     const [appointments, setAppointments] = useState([])
     const [allAppointments, setAllAppointments] = useState([])
     const [loading, setLoading] = useState(true)
@@ -161,6 +163,16 @@ const AppointmentHistory = () => {
 
     return (
         <div className='mx-auto max-w-7xl px-4 py-4 sm:px-6'>
+            {/* Back Button */}
+            <div className='mb-4 flex items-center gap-2'>
+                <button
+                    onClick={() => navigate('/patient/dashboard')}
+                    className='flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors'
+                >
+                    <ArrowLeft size={20} />
+                    <span className='text-sm font-medium'>Back to Dashboard</span>
+                </button>
+            </div>
 
 
             {/* ========================  NAV TITLE ============================== */}

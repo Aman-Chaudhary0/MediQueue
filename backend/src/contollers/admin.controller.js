@@ -97,12 +97,70 @@ export const getAllUsers = async (req, res) => {
 // GET DOCTORS ONLY
 export const getAllDoctors = async (req, res) => {
   try {
-    const doctors = await User.find({ role: "doctor" }).select("-password");
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const searchQuery = req.query.search || "";
+
+    // Build search filter for users
+    const userFilter = { role: "doctor" };
+    if (searchQuery) {
+      userFilter.$or = [
+        { name: new RegExp(searchQuery, "i") },
+        { email: new RegExp(searchQuery, "i") },
+      ];
+    }
+
+    // Get user IDs that match search
+    const matchingUsers = await User.find(userFilter).select("_id");
+    const userIds = matchingUsers.map((u) => u._id);
+
+    // Get doctor IDs that match specialty search
+    let doctorIds = [];
+    if (searchQuery) {
+      const matchingDoctors = await Doctor.find({
+        $or: [
+          { specialization: new RegExp(searchQuery, "i") },
+          { department: new RegExp(searchQuery, "i") },
+          { hospital: new RegExp(searchQuery, "i") },
+        ],
+      }).select("user");
+      doctorIds = matchingDoctors.map((d) => d.user);
+    }
+
+    // Combine IDs (user name match OR doctor specialty match)
+    const combinedIds = searchQuery
+      ? Array.from(new Set([...userIds, ...doctorIds]))
+      : userIds;
+
+    // Get total count
+    const total = combinedIds.length;
+
+    // Get paginated results with doctor details
+    const doctors = await User.find({ _id: { $in: combinedIds } })
+      .select("-password")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    // Populate doctor details if needed
+    const doctorsWithDetails = await Promise.all(
+      doctors.map(async (user) => {
+        const doctorProfile = await Doctor.findOne({ user: user._id });
+        return {
+          ...user.toObject(),
+          doctorProfile,
+        };
+      })
+    );
 
     res.status(200).json({
       success: true,
-      totalDoctors: doctors.length,
-      doctors,
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+      doctors: doctorsWithDetails,
     });
   } catch (error) {
     res.status(500).json({

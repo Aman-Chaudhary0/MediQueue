@@ -409,6 +409,9 @@ export const deleteDoctor = async (req, res) => {
 export const searchDoctors = async (req, res) => {
   try {
     const { query } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
     if (!query) {
       return res.status(400).json({
@@ -417,18 +420,27 @@ export const searchDoctors = async (req, res) => {
       });
     }
 
-    const doctors = await Doctor.find({
+    const filter = {
       $or: [
         { specialization: new RegExp(query, "i") },
         { department: new RegExp(query, "i") },
         { hospital: new RegExp(query, "i") },
       ],
-    })
+    };
+
+    const total = await Doctor.countDocuments(filter);
+    const doctors = await Doctor.find(filter)
       .populate("user", "name email")
-      .limit(10);
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
       results: doctors.length,
       doctors,
     });

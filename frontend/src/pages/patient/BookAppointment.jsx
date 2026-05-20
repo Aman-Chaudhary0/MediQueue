@@ -1,5 +1,7 @@
 
 import { useEffect, useState } from 'react'
+import { ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import DoctorSelection from '../../components/patientComponents/DoctorSelection';
 import ChooseDate from '../../components/patientComponents/ChooseDate';
 import ChooseTimeSlot from '../../components/patientComponents/ChooseTimeSlot';
@@ -7,6 +9,7 @@ import AppointmentSummary from '../../components/patientComponents/AppointmentSu
 import authService from '../../api/authService';
 
 const BookAppointment = () => {
+    const navigate = useNavigate()
     const [selectedDoctor, setSelectedDoctor] = useState(null)
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [availableSlots, setAvailableSlots] = useState([])
@@ -52,6 +55,16 @@ const BookAppointment = () => {
 
     return (
         <div className='mx-auto max-w-7xl p-3 sm:p-6'>
+            {/* Back Button */}
+            <div className='mb-4 flex items-center gap-2'>
+                <button
+                    onClick={() => navigate(-1)}
+                    className='flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors'
+                >
+                    <ArrowLeft size={20} />
+                    <span className='text-sm font-medium'>Back to Dashboard</span>
+                </button>
+            </div>
 
             {/* ================ = Book Appointment Page ================ */}
             <h1 className='text-2xl sm:text-3xl font-bold mb-3 sm:mb-4'>Book an Appointment</h1>
