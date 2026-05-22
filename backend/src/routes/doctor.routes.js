@@ -10,13 +10,18 @@ import {
   updateDoctorStatus,
   deleteDoctor,
   searchDoctors,
-} from "../contollers/doctor.controller.js";
+} from "../controllers/doctor.controller.js";
 
 // multipart upload 
 import upload from "../middlewares/upload.middleware.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
+import { authenticatedApiRateLimiter } from "../middlewares/authRateLimit.middleware.js";
+import {
+  sanitizeRequest,
+  validateDoctorProfileInput,
+} from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -33,6 +38,7 @@ router.get("/search", searchDoctors);
 router.get(
   "/me",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("doctor"),
   getCurrentDoctorProfile
 );
@@ -46,9 +52,12 @@ router.get("/:doctorId", getDoctorProfile);
 router.put(
   "/me",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("doctor"),
   // expects multipart/form-data with file field name: profilepic
   upload.single("profilepic"),
+  sanitizeRequest,
+  validateDoctorProfileInput,
   updateCurrentDoctorProfile
 );
 
@@ -58,7 +67,9 @@ router.put(
 router.post(
   "/",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin"),
+  validateDoctorProfileInput,
   createDoctorProfile
 );
 
@@ -66,7 +77,9 @@ router.post(
 router.put(
   "/:doctorId",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin", "doctor"),
+  validateDoctorProfileInput,
   updateDoctorProfile
 );
 
@@ -74,6 +87,7 @@ router.put(
 router.patch(
   "/:doctorId/status",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin"),
   updateDoctorStatus
 );
@@ -82,6 +96,7 @@ router.patch(
 router.delete(
   "/:doctorId",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin"),
   deleteDoctor
 );

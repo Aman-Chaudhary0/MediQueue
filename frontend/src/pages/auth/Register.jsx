@@ -52,7 +52,7 @@ const Register = () => {
     // Backend /auth/register needs name, email, password (OTP stored but user not created yet)
     if (!formData.name || !formData.email || !formData.password || !formData.confirm_password) return false;
     if (formData.password !== formData.confirm_password) return false;
-    if (formData.password.length < 6) return false;
+    if (formData.password.length < 8) return false;
     return isEmailValid;
   }, [formData, isEmailValid]);
 
@@ -247,6 +247,9 @@ const Register = () => {
                   required
                   className="w-full mt-1 p-2 sm:p-3 text-sm sm:text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Use 8+ characters with uppercase, lowercase, number, and special character.
+                </p>
               </div>
 
               <div>

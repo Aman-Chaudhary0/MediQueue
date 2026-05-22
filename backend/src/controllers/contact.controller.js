@@ -1,27 +1,28 @@
 import { sendMail } from "../utils/email.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { InternalServerError, ValidationError } from "../utils/errors.js";
 
-export const sendContactMessage = async (req, res) => {
-  try {
+export const sendContactMessage = asyncHandler(async (req, res) => {
     const { name, email, phone, message } = req.body;
 
     // Validation
     if (!name || typeof name !== "string") {
-      return res.status(400).json({ success: false, message: "Name is required" });
+      throw new ValidationError("Name is required");
     }
     if (!email || typeof email !== "string") {
-      return res.status(400).json({ success: false, message: "Email is required" });
+      throw new ValidationError("Email is required");
     }
     if (!phone || typeof phone !== "string") {
-      return res.status(400).json({ success: false, message: "Phone number is required" });
+      throw new ValidationError("Phone number is required");
     }
     if (!message || typeof message !== "string") {
-      return res.status(400).json({ success: false, message: "Message is required" });
+      throw new ValidationError("Message is required");
     }
 
     // Get admin email from environment
     const adminEmail = process.env.ADMIN_EMAIL;
     if (!adminEmail) {
-      return res.status(500).json({ success: false, message: "Admin email not configured" });
+      throw new InternalServerError("Admin email not configured");
     }
 
     // Create HTML email content
@@ -91,11 +92,4 @@ export const sendContactMessage = async (req, res) => {
       success: true,
       message: "Your message has been sent successfully. We will contact you soon!",
     });
-  } catch (error) {
-    console.error("Contact form error:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Failed to send message. Please try again.",
-    });
-  }
-};
+});

@@ -10,12 +10,17 @@ import {
     getAppointmentDetails,
     cancelAppointment,
     updateAppointmentStatus,
-} from "../contollers/appointment.controller.js";
+} from "../controllers/appointment.controller.js";
 
-import { getLiveQueueStatusForPatient } from "../contollers/queue.controller.js";
+import { getLiveQueueStatusForPatient } from "../controllers/queue.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
+import { authenticatedApiRateLimiter } from "../middlewares/authRateLimit.middleware.js";
+import {
+    validateAppointmentBookingInput,
+    validateAvailableSlotsQuery,
+} from "../middlewares/validationMiddleware.js";
 
 const router = express.Router();
 
@@ -23,15 +28,30 @@ const router = express.Router();
 // ================================== PATIENT ROUTES=======================================
 
 // Get available slots for a doctor on a selected date
-router.get("/available-slots", protect, authorizeRoles("patient"), getAvailableSlots);
+router.get(
+    "/available-slots",
+    protect,
+    authenticatedApiRateLimiter,
+    authorizeRoles("patient"),
+    validateAvailableSlotsQuery,
+    getAvailableSlots
+);
 
 // book appointment
-router.post("/book", protect, authorizeRoles("patient"), bookAppointment);
+router.post(
+    "/book",
+    protect,
+    authenticatedApiRateLimiter,
+    authorizeRoles("patient"),
+    validateAppointmentBookingInput,
+    bookAppointment
+);
 
 // Get all patient appointments
 router.get(
     "/my-appointments",
     protect,
+    authenticatedApiRateLimiter,
     authorizeRoles("patient"),
     getPatientAppointments
 );
@@ -39,6 +59,7 @@ router.get(
 router.get(
     "/doctor/stats",
     protect,
+    authenticatedApiRateLimiter,
     authorizeRoles("doctor"),
     getDoctorAppointmentStats
 );
@@ -46,6 +67,7 @@ router.get(
 router.get(
     "/doctor/upcoming-patients",
     protect,
+    authenticatedApiRateLimiter,
     authorizeRoles("doctor"),
     getDoctorUpcomingPatients
 );
@@ -53,6 +75,7 @@ router.get(
 router.get(
     "/doctor/today-schedule",
     protect,
+    authenticatedApiRateLimiter,
     authorizeRoles("doctor"),
     getDoctorTodaySchedule
 );
@@ -64,17 +87,19 @@ router.get(
 router.get(
     "/live-queue/status",
     protect,
+    authenticatedApiRateLimiter,
     authorizeRoles("patient"),
     getLiveQueueStatusForPatient
 );
 
 // Get appointment details
-router.get("/:appointmentId", protect, getAppointmentDetails);
+router.get("/:appointmentId", protect, authenticatedApiRateLimiter, getAppointmentDetails);
 
 // Cancel appointment (patient can cancel their own)
 router.put(
     "/:appointmentId/cancel",
     protect,
+    authenticatedApiRateLimiter,
     authorizeRoles("patient"),
     cancelAppointment
 );
@@ -83,6 +108,7 @@ router.put(
 router.put(
     "/:appointmentId/status",
     protect,
+    authenticatedApiRateLimiter,
     authorizeRoles("doctor", "admin"),
     updateAppointmentStatus
 );

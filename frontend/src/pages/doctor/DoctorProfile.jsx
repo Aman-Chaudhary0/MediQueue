@@ -1,21 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { LogOut, AlertTriangle } from 'lucide-react'
+import { fetchWithAuth } from '../../api/fetchWithAuth'
+import authService from '../../api/authService'
 
 const DoctorProfile = () => {
-  const { user, loading: authLoading } = useAuth()
+  const { isAuthenticated, loading: authLoading } = useAuth()
   const { logout } = useAuth()
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
-  const accessToken = user?.accessToken || localStorage.getItem('accessToken') || ''
-
-  const authHeaders = useMemo(
-    () => ({
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-    }),
-    [accessToken]
-  )
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -49,7 +43,7 @@ const DoctorProfile = () => {
 
   useEffect(() => {
     if (authLoading) return
-    if (!accessToken) {
+    if (!isAuthenticated) {
       setLoading(false)
       setError('Please login again to load doctor profile.')
       return
@@ -62,17 +56,12 @@ const DoctorProfile = () => {
         setSaveError('')
         setSaveSuccess('')
 
-        const res = await fetch('http://localhost:3000/api/doctor/me', {
+        const data = await fetchWithAuth('/api/doctor/me', {
           method: 'GET',
-          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            ...authHeaders,
           },
         })
-
-        const data = await res.json()
-        if (!res.ok) throw new Error(data?.message || 'Failed to load doctor profile')
 
         const doctor = data?.doctor
 
@@ -95,7 +84,7 @@ const DoctorProfile = () => {
     }
 
     fetchMyDoctor()
-  }, [accessToken, authHeaders, authLoading])
+  }, [isAuthenticated, authLoading])
 
   useEffect(() => {
     return () => {
@@ -164,17 +153,11 @@ const DoctorProfile = () => {
         formData.append('profilepic', selectedFile)
       }
 
-      const res = await fetch('http://localhost:3000/api/doctor/me', {
+      const data = await fetchWithAuth('/api/doctor/me', {
         method: 'PUT',
-        credentials: 'include',
-        headers: {
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
+        headers: {},
         body: formData,
       })
-
-      const data = await res.json()
-      if (!res.ok) throw new Error(data?.message || 'Failed to update doctor profile')
 
       const updated = data?.doctor
       setSpecialization(updated?.specialization || specialization)
@@ -200,18 +183,7 @@ const DoctorProfile = () => {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true)
-      const response = await fetch('http://localhost:3000/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      
-      if (!response.ok) {
-        throw new Error('Logout failed')
-      }
-      
+      await authService.logout()
       logout()
       setShowLogoutModal(false)
       navigate('/')
@@ -397,6 +369,14 @@ const DoctorProfile = () => {
 
         {/* Buttons */}
         <div className='flex justify-end gap-4 mt-8'>
+          <button
+            className='px-5 py-2 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50'
+            type='button'
+            onClick={() => navigate('/change-password')}
+          >
+            Change Password
+          </button>
+
           <button
             className='px-5 py-2 rounded-lg border text-gray-600 hover:bg-gray-100'
             type='button'

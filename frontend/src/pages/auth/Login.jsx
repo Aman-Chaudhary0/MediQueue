@@ -126,7 +126,13 @@ const Login = () => {
                                 />
                             </div>
                             <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3'>
-                                <button type="button" className='text-xs sm:text-sm text-blue-600 hover:underline'>Forgot Password?</button>
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/forgot-password')}
+                                    className='text-xs sm:text-sm text-blue-600 hover:underline'
+                                >
+                                    Forgot Password?
+                                </button>
                                 <button 
                                     type="submit" 
                                     disabled={loading}
@@ -140,18 +146,9 @@ const Login = () => {
                         <p className='text-center text-xs sm:text-sm mt-4 text-gray-600'>
                             Don't have an account? <button onClick={() => navigate('/register')} className='text-blue-600 hover:underline'>Register here</button>
                         </p>
+
+
                     </div>
-
-                    {/* ===================== Test Credentials =========================== */}
-
-                    <div className='mt-4 sm:mt-6 p-6 sm:p-8 bg-white rounded-lg shadow-lg text-center'>
-                        <p className='text-xs sm:text-sm font-semibold mb-3'>📝 Test Credentials</p>
-                        <div className='text-xs space-y-2 mb-4'>
-                            <p><strong>Admin:</strong> admin@example.com / admin123</p>
-                            <p><strong>Patient:</strong> patient@example.com / password</p>
-                        </div>
-                    </div>
-
 
                 </div>
             </div>

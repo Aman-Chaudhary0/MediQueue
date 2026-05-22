@@ -2,6 +2,12 @@ import React from 'react'
 import Home from './pages/public/Home'
 import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
+import ForgotPassword from './pages/auth/ForgotPassword'
+import ResetPassword from './pages/auth/ResetPassword'
+import ForgotPasswordOtp from './pages/auth/ForgotPasswordOtp'
+
+import ChangePassword from './pages/auth/ChangePassword'
+import DoctorEmailVerification from './pages/auth/DoctorEmailVerification'
 import BookAppointment from './pages/patient/BookAppointment'
 import Dashboard from './pages/patient/Dashboard'
 import LiveQueue from './pages/patient/LiveQueue'
@@ -36,6 +42,12 @@ const App = () => {
         {/* Auth Routes */}
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/forgot-password-otp' element={<ForgotPasswordOtp />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
+
+        <Route path='/doctor-email-verification' element={<DoctorEmailVerification />} />
+        <Route path='/change-password' element={<ProtectedRoute requiredRoles={['patient', 'doctor', 'admin']}><ChangePassword /></ProtectedRoute>} />
 
 
 

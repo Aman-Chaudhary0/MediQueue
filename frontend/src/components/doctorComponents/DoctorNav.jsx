@@ -1,12 +1,12 @@
 import { Bell } from 'lucide-react'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { fetchWithAuth } from '../../api/fetchWithAuth'
 
 const DoctorNav = () => {
   const navigate = useNavigate()
-  const { user, loading: authLoading } = useAuth()
-  const accessToken = user?.accessToken || localStorage.getItem('accessToken') || ''
+  const { isAuthenticated, loading: authLoading } = useAuth()
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -14,16 +14,9 @@ const DoctorNav = () => {
   const [doctorName, setDoctorName] = useState('')
   const [profilePic, setProfilePic] = useState('https://via.placeholder.com/100')
 
-  const authHeaders = useMemo(
-    () => ({
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-    }),
-    [accessToken]
-  )
-
   useEffect(() => {
     if (authLoading) return
-    if (!accessToken) {
+    if (!isAuthenticated) {
       setLoading(false)
       setError('Please login again to load doctor profile.')
       return
@@ -35,17 +28,12 @@ const DoctorNav = () => {
         setError('')
 
         // fetching api
-        const res = await fetch('http://localhost:3000/api/doctor/me', {
+        const data = await fetchWithAuth('/api/doctor/me', {
           method: 'GET',
-          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
-            ...authHeaders,
           },
         })
-
-        const data = await res.json()
-        if (!res.ok) throw new Error(data?.message || 'Failed to load doctor profile')
 
         const doctor = data?.doctor
 
@@ -59,7 +47,7 @@ const DoctorNav = () => {
     }
 
     fetchMyDoctor()
-  }, [accessToken, authHeaders, authLoading])
+  }, [isAuthenticated, authLoading])
 
 
 // ==========================================================================================================================================================================

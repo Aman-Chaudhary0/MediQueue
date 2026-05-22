@@ -4,12 +4,6 @@ import { useAuth } from '../context/AuthContext'
 
 const ProtectedRoute = ({ children, requiredRoles = [] }) => {
     const { isAuthenticated, user, loading } = useAuth()
-    const token = localStorage.getItem('accessToken')
-
-    // If loading but token exists, show children (token was just set by login)
-    if (loading && token) {
-        return children
-    }
 
     // Still loading auth state and no token
     if (loading) {
@@ -17,7 +11,7 @@ const ProtectedRoute = ({ children, requiredRoles = [] }) => {
     }
 
     // No authentication, redirect to login
-    if (!isAuthenticated || !token) {
+    if (!isAuthenticated || !user) {
         return <Navigate to="/login" replace />
     }
 

@@ -1,5 +1,7 @@
 import Appointment from "../models/appointment.model.js";
 import Patient from "../models/patient.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { NotFoundError } from "../utils/errors.js";
 
 const SLOT_DURATION_IN_MINUTES = 30;
 
@@ -129,16 +131,12 @@ const computeEstimatedWaiting = (aheadCount, servingTokenIndex) => {
 
 
 // GET LIVE QUEUE STATUS FOR PATIENT
-export const getLiveQueueStatusForPatient = async (req, res) => {
-  try {
+export const getLiveQueueStatusForPatient = asyncHandler(async (req, res) => {
     await cancelExpiredAppointments();
 
     const patient = await Patient.findOne({ user: req.user._id }).select("_id");
     if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient profile not found",
-      });
+      throw new NotFoundError("Patient profile not found");
     }
 
     const now = new Date();
@@ -265,10 +263,4 @@ export const getLiveQueueStatusForPatient = async (req, res) => {
         status: a.status === "confirmed" ? "In Progress" : "Waiting",
       })),
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});

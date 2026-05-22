@@ -2,15 +2,21 @@ import express from "express";
 
 import {
   registerDoctor,
+  verifyDoctorOtp,
   getAllUsers,
   getAllDoctors,
   deleteUser,
   getAdminDashboardStats,
   getAdminAnalytics,
-} from "../contollers/admin.controller.js";
+} from "../controllers/admin.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
 import { authorizeRoles } from "../middlewares/role.middleware.js";
+import {
+  validateDoctorOtpVerificationInput,
+  validateDoctorRegistrationInput,
+} from "../middlewares/validationMiddleware.js";
+import { authenticatedApiRateLimiter } from "../middlewares/authRateLimit.middleware.js";
 
 const router = express.Router();
 
@@ -20,8 +26,19 @@ const router = express.Router();
 router.post(
   "/register-doctor",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin"),
+  validateDoctorRegistrationInput,
   registerDoctor
+);
+
+router.post(
+  "/verify-doctor-otp",
+  protect,
+  authenticatedApiRateLimiter,
+  authorizeRoles("admin"),
+  validateDoctorOtpVerificationInput,
+  verifyDoctorOtp
 );
 
 
@@ -29,6 +46,7 @@ router.post(
 router.get(
   "/users",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin"),
   getAllUsers
 );
@@ -37,6 +55,7 @@ router.get(
 router.get(
   "/doctors",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin"),
   getAllDoctors
 );
@@ -45,6 +64,7 @@ router.get(
 router.delete(
   "/users/:userId",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin"),
   deleteUser
 );
@@ -53,6 +73,7 @@ router.delete(
 router.get(
   "/dashboard/stats",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin"),
   getAdminDashboardStats
 );
@@ -61,6 +82,7 @@ router.get(
 router.get(
   "/analytics",
   protect,
+  authenticatedApiRateLimiter,
   authorizeRoles("admin"),
   getAdminAnalytics
 );

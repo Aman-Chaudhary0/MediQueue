@@ -1,13 +1,14 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { LogOut, AlertTriangle } from "lucide-react";
+import { fetchWithAuth } from "../../api/fetchWithAuth";
+import authService from "../../api/authService";
 
 const PatientProfile = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const { logout } = useAuth();
   const navigate = useNavigate();
-  const accessToken = user?.accessToken || localStorage.getItem('accessToken') || "";
 
   const fileInputRef = useRef(null);
 
@@ -29,13 +30,6 @@ const PatientProfile = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const authHeaders = useMemo(
-    () => ({
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-    }),
-    [accessToken]
-  );
-
   const openFilePicker = () => {
     if (fileInputRef.current) {
       // ensure picker opens even after same-file re-selection
@@ -46,7 +40,7 @@ const PatientProfile = () => {
 
   useEffect(() => {
     if (authLoading) return;
-    if (!accessToken) {
+    if (!isAuthenticated) {
       setLoading(false);
       setError("Please login again to load patient profile.");
       return;
@@ -59,17 +53,12 @@ const PatientProfile = () => {
         setSaveError("");
         setSaveSuccess("");
 
-        const res = await fetch("http://localhost:3000/api/patient/me", {
+        const data = await fetchWithAuth("/api/patient/me", {
           method: "GET",
-          credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            ...authHeaders,
           },
         });
-
-        const data = await res.json();
-        if (!res.ok) throw new Error(data?.message || "Failed to load patient profile");
 
         const patient = data?.patient;
 
@@ -91,7 +80,7 @@ const PatientProfile = () => {
     };
 
     fetchMyPatient();
-  }, [accessToken, authHeaders, authLoading]);
+  }, [isAuthenticated, authLoading]);
 
   useEffect(() => {
     return () => {
@@ -166,20 +155,11 @@ const PatientProfile = () => {
         formData.append("profilepic", selectedFile);
       }
 
-      const res = await fetch(`http://localhost:3000/api/patient/${patientUserId}`, {
+      const data = await fetchWithAuth(`/api/patient/${patientUserId}`, {
         method: "PUT",
-        credentials: "include",
-        headers: {
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
+        headers: {},
         body: formData,
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to update profile");
-      }
 
       setSaveSuccess("Profile updated successfully.");
 
@@ -198,18 +178,7 @@ const PatientProfile = () => {
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      const response = await fetch("http://localhost:3000/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error("Logout failed");
-      }
-      
+      await authService.logout();
       logout();
       setShowLogoutModal(false);
       navigate("/");
@@ -375,6 +344,14 @@ const PatientProfile = () => {
 
         {/* Buttons */}
         <div className="flex justify-end gap-4 mt-8">
+          <button
+            className="px-5 py-2 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50"
+            type="button"
+            onClick={() => navigate("/change-password")}
+          >
+            Change Password
+          </button>
+
           <button
             className={`px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 ${
               saving ? "opacity-70 cursor-not-allowed" : ""

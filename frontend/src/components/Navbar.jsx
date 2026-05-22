@@ -3,6 +3,7 @@ import { assets } from '../assets/assets'
 import { Menu, X, LogOut, AlertTriangle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import authService from '../api/authService'
 
 // 3 sections - logo, list of pages, login/signup and responsive hamburger menu for mobile 
 const Navbar = () => {
@@ -19,18 +20,7 @@ const Navbar = () => {
     const handleLogout = async () => {
         try {
             setIsLoggingOut(true)
-            const response = await fetch('http://localhost:3000/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            })
-            
-            if (!response.ok) {
-                throw new Error('Logout failed')
-            }
-            
+            await authService.logout()
             logout()
             setShowLogoutModal(false)
             setIsOpen(false)

@@ -2,11 +2,18 @@ import Doctor from "../models/docter.model.js";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
 import imagekit from "../config/imagekit.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import {
+  ConflictError,
+  ForbiddenError,
+  InternalServerError,
+  NotFoundError,
+  ValidationError,
+} from "../utils/errors.js";
 
 
 // CREATE DOCTOR PROFILE (by admin)
-export const createDoctorProfile = async (req, res) => {
-  try {
+export const createDoctorProfile = asyncHandler(async (req, res) => {
     const {
       userId,
       specialization,
@@ -30,35 +37,23 @@ export const createDoctorProfile = async (req, res) => {
       !hospital ||
       !consultationFee
     ) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide all required fields",
-      });
+      throw new ValidationError("Please provide all required fields");
     }
 
     // Check if user exists and is a doctor
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      throw new NotFoundError("User not found");
     }
 
     if (user.role !== "doctor") {
-      return res.status(400).json({
-        success: false,
-        message: "User is not a doctor",
-      });
+      throw new ValidationError("User is not a doctor");
     }
 
     // Check if doctor profile already exists
     const existingDoctor = await Doctor.findOne({ user: userId });
     if (existingDoctor) {
-      return res.status(400).json({
-        success: false,
-        message: "Doctor profile already exists for this user",
-      });
+      throw new ConflictError("Doctor profile already exists for this user");
     }
 
     // Create doctor profile
@@ -83,35 +78,22 @@ export const createDoctorProfile = async (req, res) => {
       message: "Doctor profile created successfully",
       doctor,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // GET DOCTOR PROFILE
-export const getDoctorProfile = async (req, res) => {
-  try {
+export const getDoctorProfile = asyncHandler(async (req, res) => {
     const { doctorId } = req.params;
 
     // Hardening: prevent ObjectId cast errors for special route tokens like "me"
     if (doctorId === "me") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid doctorId: 'me' (use GET/PUT /api/doctor/me)",
-      });
+      throw new ValidationError("Invalid doctorId: 'me' (use GET/PUT /api/doctor/me)");
     }
 
     if (!mongoose.Types.ObjectId.isValid(doctorId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid doctorId",
-      });
+      throw new ValidationError("Invalid doctorId");
     }
 
     const doctor = await Doctor.findById(doctorId).populate(
@@ -120,61 +102,42 @@ export const getDoctorProfile = async (req, res) => {
     );
 
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+      throw new NotFoundError("Doctor not found");
     }
 
     res.status(200).json({
       success: true,
       doctor,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // GET CURRENT DOCTOR PROFILE (for logged-in doctor)
-export const getCurrentDoctorProfile = async (req, res) => {
-  try {
+export const getCurrentDoctorProfile = asyncHandler(async (req, res) => {
     const doctor = await Doctor.findOne({ user: req.user._id }).populate(
       "user",
       "name email"
     );
 
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message:
-          "Doctor profile not found for this account. An admin must create the doctor profile first (POST /api/doctor with required fields).",
-      });
+      throw new NotFoundError(
+        "Doctor profile not found for this account. An admin must create the doctor profile first (POST /api/doctor with required fields)."
+      );
     }
 
     res.status(200).json({
       success: true,
       doctor,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // GET ALL DOCTORS
-export const getAllDoctors = async (req, res) => {
-  try {
+export const getAllDoctors = asyncHandler(async (req, res) => {
     const { specialization, department, hospital, status } = req.query;
 
     // Build filter object
@@ -193,37 +156,24 @@ export const getAllDoctors = async (req, res) => {
       totalDoctors: doctors.length,
       doctors,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // UPDATE DOCTOR PROFILE (by id, admin:any doctor, doctor:self only)
-export const updateDoctorProfile = async (req, res) => {
-  try {
+export const updateDoctorProfile = asyncHandler(async (req, res) => {
     const { doctorId } = req.params;
     const updates = req.body;
 
     // If someone accidentally hits PUT /api/doctor/me on this route,
     // prevent Cast-to-ObjectId errors.
     if (doctorId === "me") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid doctorId: 'me' (use PUT /api/doctor/me)",
-      });
+      throw new ValidationError("Invalid doctorId: 'me' (use PUT /api/doctor/me)");
     }
 
     if (!mongoose.Types.ObjectId.isValid(doctorId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid doctorId",
-      });
+      throw new ValidationError("Invalid doctorId");
     }
 
     // Don't allow updating user field
@@ -231,19 +181,13 @@ export const updateDoctorProfile = async (req, res) => {
 
     const existingDoctor = await Doctor.findById(doctorId).populate("user", "role");
     if (!existingDoctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+      throw new NotFoundError("Doctor not found");
     }
 
     // If caller is a doctor, they can update only their own profile
     if (req.user?.role === "doctor" || req.user?.role === "patient") {
       if (String(existingDoctor.user?._id) !== String(req.user?._id)) {
-        return res.status(403).json({
-          success: false,
-          message: "You can only update your own doctor profile",
-        });
+        throw new ForbiddenError("You can only update your own doctor profile");
       }
     }
 
@@ -257,27 +201,17 @@ export const updateDoctorProfile = async (req, res) => {
       message: "Doctor profile updated successfully",
       doctor,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // UPDATE CURRENT DOCTOR PROFILE (PUT /me)
-export const updateCurrentDoctorProfile = async (req, res) => {
-  try {
+export const updateCurrentDoctorProfile = asyncHandler(async (req, res) => {
     const doctor = await Doctor.findOne({ user: req.user._id });
 
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor profile not found",
-      });
+      throw new NotFoundError("Doctor profile not found");
     }
 
     // Build doctor updates from request body
@@ -294,11 +228,9 @@ export const updateCurrentDoctorProfile = async (req, res) => {
     // Update profile pic if a file is provided
     if (req.file) {
       if (!imagekit || typeof imagekit.upload !== "function") {
-        return res.status(500).json({
-          success: false,
-          message:
-            "ImageKit is not configured. Please set IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, IMAGEKIT_URL_ENDPOINT in backend/.env",
-        });
+        throw new InternalServerError(
+          "ImageKit is not configured. Please set IMAGEKIT_PUBLIC_KEY, IMAGEKIT_PRIVATE_KEY, IMAGEKIT_URL_ENDPOINT in backend/.env"
+        );
       }
 
       const response = await imagekit.upload({
@@ -322,28 +254,18 @@ export const updateCurrentDoctorProfile = async (req, res) => {
       message: "Doctor profile updated successfully",
       doctor: updatedDoctor,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // UPDATE DOCTOR STATUS
-export const updateDoctorStatus = async (req, res) => {
-  try {
+export const updateDoctorStatus = asyncHandler(async (req, res) => {
     const { doctorId } = req.params;
     const { status } = req.body;
 
     if (!["active", "inactive", "on-leave"].includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid status. Must be 'active', 'inactive', or 'on-leave'",
-      });
+      throw new ValidationError("Invalid status. Must be 'active', 'inactive', or 'on-leave'");
     }
 
     const doctor = await Doctor.findByIdAndUpdate(
@@ -353,10 +275,7 @@ export const updateDoctorStatus = async (req, res) => {
     ).populate("user", "name email");
 
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+      throw new NotFoundError("Doctor not found");
     }
 
     res.status(200).json({
@@ -364,60 +283,40 @@ export const updateDoctorStatus = async (req, res) => {
       message: "Doctor status updated successfully",
       doctor,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // DELETE DOCTOR
-export const deleteDoctor = async (req, res) => {
-  try {
+export const deleteDoctor = asyncHandler(async (req, res) => {
     const { doctorId } = req.params;
 
     const doctor = await Doctor.findByIdAndDelete(doctorId);
 
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+      throw new NotFoundError("Doctor not found");
     }
 
     res.status(200).json({
       success: true,
       message: "Doctor deleted successfully",
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 
 // SEARCH DOCTORS
-export const searchDoctors = async (req, res) => {
-  try {
+export const searchDoctors = asyncHandler(async (req, res) => {
     const { query } = req.query;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
     if (!query) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide a search query",
-      });
+      throw new ValidationError("Please provide a search query");
     }
 
     const filter = {
@@ -444,10 +343,4 @@ export const searchDoctors = async (req, res) => {
       results: doctors.length,
       doctors,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});

@@ -1,6 +1,8 @@
 import Appointment from "../models/appointment.model.js";
 import Patient from "../models/patient.model.js";
 import Doctor from "../models/docter.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { NotFoundError, ValidationError } from "../utils/errors.js";
 
 // keep these in sync with queue.controller.js (queue logic depends on them)
 const SLOT_DURATION_IN_MINUTES = 30;
@@ -168,34 +170,24 @@ const getTokenNumberForSlot = (startTime) => {
 
 
 // get available slots
-export const getAvailableSlots = async (req, res) => {
-  try {
+export const getAvailableSlots = asyncHandler(async (req, res) => {
     await cancelExpiredAppointments();
 
     const { doctorId, date } = req.query;
 
     if (!doctorId || !date) {
-      return res.status(400).json({
-        success: false,
-        message: "doctorId and date are required",
-      });
+      throw new ValidationError("doctorId and date are required");
     }
 
     const doctor = await Doctor.findById(doctorId).populate("user", "name email");
 
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+      throw new NotFoundError("Doctor not found");
     }
 
     const requestedDate = new Date(date);
     if (Number.isNaN(requestedDate.getTime())) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid date",
-      });
+      throw new ValidationError("Invalid date");
     }
 
     const { startOfDay, endOfDay } = getDayRange(requestedDate);
@@ -237,29 +229,19 @@ export const getAvailableSlots = async (req, res) => {
       selectedDate: startOfDay,
       availableSlots,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // BOOK APPOINTMENT
-export const bookAppointment = async (req, res) => {
-  try {
+export const bookAppointment = asyncHandler(async (req, res) => {
     const { doctorId, appointmentDate, startTime, endTime } =
       req.body;
 
     // Validate required fields
     if (!doctorId || !appointmentDate || !startTime || !endTime) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide all required fields",
-      });
+      throw new ValidationError("Please provide all required fields");
     }
 
     // Get patient info
@@ -268,18 +250,12 @@ export const bookAppointment = async (req, res) => {
     });
 
     if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient profile not found",
-      });
+      throw new NotFoundError("Patient profile not found");
     }
 
     const doctor = await Doctor.findById(doctorId);
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor not found",
-      });
+      throw new NotFoundError("Doctor not found");
     }
 
     const { startOfDay, endOfDay } = getDayRange(appointmentDate);
@@ -289,17 +265,11 @@ export const bookAppointment = async (req, res) => {
     );
 
     if (!appointmentStartDateTime) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid appointment start time",
-      });
+      throw new ValidationError("Invalid appointment start time");
     }
 
     if (appointmentStartDateTime <= new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: "You cannot book an appointment in the past",
-      });
+      throw new ValidationError("You cannot book an appointment in the past");
     }
 
     // Check for appointment conflicts (same doctor, same time slot)
@@ -315,18 +285,12 @@ export const bookAppointment = async (req, res) => {
     });
 
     if (existingAppointment) {
-      return res.status(400).json({
-        success: false,
-        message: "Time slot already booked for this doctor",
-      });
+      throw new ValidationError("Time slot already booked for this doctor");
     }
 
     const tokenNumber = getTokenNumberForSlot(startTime);
     if (!tokenNumber) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid slot selected",
-      });
+      throw new ValidationError("Invalid slot selected");
     }
 
     // Create appointment
@@ -363,21 +327,14 @@ export const bookAppointment = async (req, res) => {
       message: "Appointment booked successfully",
       appointment,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 
 // GET ALL APPOINTMENTS (PATIENT)
-export const getPatientAppointments = async (req, res) => {
-  try {
+export const getPatientAppointments = asyncHandler(async (req, res) => {
     await cancelExpiredAppointments();
 
     const patient = await Patient.findOne({
@@ -385,10 +342,7 @@ export const getPatientAppointments = async (req, res) => {
     });
 
     if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient profile not found",
-      });
+      throw new NotFoundError("Patient profile not found");
     }
 
     const appointments = await Appointment.find({
@@ -407,19 +361,12 @@ export const getPatientAppointments = async (req, res) => {
       success: true,
       appointments,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 // GET APPOINTMENT STATS FOR CURRENT DOCTOR
-export const getDoctorAppointmentStats = async (req, res) => {
-  try {
+export const getDoctorAppointmentStats = asyncHandler(async (req, res) => {
     await cancelExpiredAppointments();
 
     const doctor = await Doctor.findOne({
@@ -427,10 +374,7 @@ export const getDoctorAppointmentStats = async (req, res) => {
     });
 
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor profile not found",
-      });
+      throw new NotFoundError("Doctor profile not found");
     }
 
     const appointments = await Appointment.find({
@@ -485,20 +429,13 @@ export const getDoctorAppointmentStats = async (req, res) => {
       success: true,
       stats,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // GET TODAY'S UPCOMING PATIENTS FOR CURRENT DOCTOR
-export const getDoctorUpcomingPatients = async (req, res) => {
-  try {
+export const getDoctorUpcomingPatients = asyncHandler(async (req, res) => {
     await cancelExpiredAppointments();
 
     const doctor = await Doctor.findOne({
@@ -506,10 +443,7 @@ export const getDoctorUpcomingPatients = async (req, res) => {
     });
 
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor profile not found",
-      });
+      throw new NotFoundError("Doctor profile not found");
     }
 
     const { startOfDay, endOfDay } = getDayRange(new Date());
@@ -548,20 +482,13 @@ export const getDoctorUpcomingPatients = async (req, res) => {
       success: true,
       appointments: sortedAppointments,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // GET TODAY'S SCHEDULE FOR CURRENT DOCTOR
-export const getDoctorTodaySchedule = async (req, res) => {
-  try {
+export const getDoctorTodaySchedule = asyncHandler(async (req, res) => {
     await cancelExpiredAppointments();
 
     const doctor = await Doctor.findOne({
@@ -569,10 +496,7 @@ export const getDoctorTodaySchedule = async (req, res) => {
     });
 
     if (!doctor) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor profile not found",
-      });
+      throw new NotFoundError("Doctor profile not found");
     }
 
     const { startOfDay, endOfDay } = getDayRange(new Date());
@@ -608,21 +532,14 @@ export const getDoctorTodaySchedule = async (req, res) => {
       success: true,
       appointments,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 
 // GET A SINGLE APPOINTMENT DETAILS
-export const getAppointmentDetails = async (req, res) => {
-  try {
+export const getAppointmentDetails = asyncHandler(async (req, res) => {
     await cancelExpiredAppointments();
 
     const appointment = await Appointment.findById(
@@ -645,30 +562,20 @@ export const getAppointmentDetails = async (req, res) => {
     ]);
 
     if (!appointment) {
-      return res.status(404).json({
-        success: false,
-        message: "Appointment not found",
-      });
+      throw new NotFoundError("Appointment not found");
     }
 
     res.status(200).json({
       success: true,
       appointment,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 // CANCEL APPOINTMENT
-export const cancelAppointment = async (req, res) => {
-  try {
+export const cancelAppointment = asyncHandler(async (req, res) => {
     const appointment = await Appointment.findByIdAndUpdate(
       req.params.appointmentId,
       { status: "cancelled" },
@@ -676,10 +583,7 @@ export const cancelAppointment = async (req, res) => {
     );
 
     if (!appointment) {
-      return res.status(404).json({
-        success: false,
-        message: "Appointment not found",
-      });
+      throw new NotFoundError("Appointment not found");
     }
 
     res.status(200).json({
@@ -687,13 +591,7 @@ export const cancelAppointment = async (req, res) => {
       message: "Appointment cancelled successfully",
       appointment,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
@@ -701,15 +599,11 @@ export const cancelAppointment = async (req, res) => {
 
 
 // UPDATE APPOINTMENT STATUS (DOCTOR/ADMIN)
-export const updateAppointmentStatus = async (req, res) => {
-  try {
+export const updateAppointmentStatus = asyncHandler(async (req, res) => {
     const { status } = req.body;
 
     if (!["pending", "confirmed", "completed", "cancelled"].includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid status",
-      });
+      throw new ValidationError("Invalid status");
     }
 
     const appointment = await Appointment.findByIdAndUpdate(
@@ -719,10 +613,7 @@ export const updateAppointmentStatus = async (req, res) => {
     );
 
     if (!appointment) {
-      return res.status(404).json({
-        success: false,
-        message: "Appointment not found",
-      });
+      throw new NotFoundError("Appointment not found");
     }
 
     res.status(200).json({
@@ -730,10 +621,4 @@ export const updateAppointmentStatus = async (req, res) => {
       message: "Appointment status updated",
       appointment,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});

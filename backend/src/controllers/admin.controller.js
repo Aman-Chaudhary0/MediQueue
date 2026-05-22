@@ -3,69 +3,145 @@ import User from "../models/user.model.js";
 import Doctor from "../models/docter.model.js";
 import Patient from "../models/patient.model.js";
 import Appointment from "../models/appointment.model.js";
-import bcrypt from "bcrypt";
+import OtpRegistration from "../models/otp.model.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ConflictError, NotFoundError, ValidationError } from "../utils/errors.js";
+import { hashPassword } from "../utils/password.js";
+import { compareOtp, generateNumericOtp, hashOtp, isValidEmail } from "../utils/otp.js";
+import { sendMail } from "../utils/email.js";
+
+const getDoctorVerificationUrl = (email) => {
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  return `${frontendUrl.replace(/\/$/, "")}/doctor-email-verification?email=${encodeURIComponent(email)}`;
+};
 
 
 // ADMIN: REGISTER DOCTOR
-export const registerDoctor = async (req, res) => {
-  try {
+export const registerDoctor = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
 
 
     // Validate required fields
     if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "Please provide name, email, and password",
-      });
+      throw new ValidationError("Please provide name, email, and password");
+    }
+
+    if (!isValidEmail(email)) {
+      throw new ValidationError("Invalid email address");
     }
 
     // Check existing user
     const existingUser = await User.findOne({ email });
 
     if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists",
-      });
+      throw new ConflictError("User already exists");
     }
 
     // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await hashPassword(password);
 
-    // Create doctor user
-    const doctor = await User.create({
-      name,
-      email,
-      password: hashedPassword,
+    const otp = generateNumericOtp({ digits: 6 });
+    const otpHash = hashOtp(otp);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await OtpRegistration.findOneAndUpdate(
+      { email },
+      {
+        email,
+        otpHash,
+        name,
+        passwordHash: hashedPassword,
+        role: "doctor",
+        expiresAt,
+      },
+      { upsert: true, new: true }
+    );
+
+    const verificationUrl = getDoctorVerificationUrl(email);
+
+    await sendMail({
+      to: email,
+      subject: "Verify your MediQueue doctor account",
+      text: `Hello Dr. ${name},\n\nAn admin invited you to MediQueue. Your OTP is: ${otp}\n\nThis OTP expires in 10 minutes.\n\nComplete verification here: ${verificationUrl}\n\nIf you were not expecting this invitation, please ignore this email.`,
+      html: `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f2937;">
+          <h2>Verify your MediQueue doctor account</h2>
+          <p>Hello Dr. ${name},</p>
+          <p>An administrator created your doctor account invitation. Use the OTP below to verify your email and activate your account.</p>
+          <p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">${otp}</p>
+          <p>This OTP expires in 10 minutes.</p>
+          <p>
+            <a href="${verificationUrl}" style="display:inline-block;padding:12px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;">
+              Verify Doctor Account
+            </a>
+          </p>
+        </div>
+      `,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "OTP sent successfully. Verify the doctor's email to complete doctor registration.",
+      pendingDoctor: {
+        name,
+        email,
+        role: "doctor",
+      },
+      verificationUrl,
+    });
+});
+
+export const verifyDoctorOtp = asyncHandler(async (req, res) => {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      throw new ValidationError("Email and OTP are required");
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new ConflictError("User already exists");
+    }
+
+    const otpRecord = await OtpRegistration.findOne({ email });
+
+    if (!otpRecord || otpRecord.role !== "doctor") {
+      throw new ValidationError("OTP not found or expired for this doctor invitation");
+    }
+
+    if (otpRecord.expiresAt.getTime() < Date.now()) {
+      throw new ValidationError("OTP expired. Please send a new verification OTP.");
+    }
+
+    const isOtpValid = compareOtp({ otp, otpHash: otpRecord.otpHash });
+    if (!isOtpValid) {
+      throw new ValidationError("Invalid OTP");
+    }
+
+    const doctorUser = await User.create({
+      name: otpRecord.name,
+      email: otpRecord.email,
+      password: otpRecord.passwordHash,
       role: "doctor",
     });
 
-    // Create empty doctor profile document immediately
-    // so /api/doctor/me works after registration.
-    await Doctor.create({ user: doctor._id });
+    await Doctor.create({
+      user: doctorUser._id,
+    });
 
-    // Remove password from response
-    const userResponse = {
-      _id: doctor._id,
-      name: doctor.name,
-      email: doctor.email,
-      role: doctor.role,
-    };
+    await OtpRegistration.deleteOne({ email });
 
     res.status(201).json({
       success: true,
-      message: "Doctor registered successfully",
-      user: userResponse,
+      message: "Doctor email verified and doctor account created successfully.",
+      user: {
+        _id: doctorUser._id,
+        name: doctorUser.name,
+        email: doctorUser.email,
+        role: doctorUser.role,
+      },
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
@@ -73,8 +149,7 @@ export const registerDoctor = async (req, res) => {
 
 
 // GET ALL USERS (ADMIN ONLY)
-export const getAllUsers = async (req, res) => {
-  try {
+export const getAllUsers = asyncHandler(async (req, res) => {
     const users = await User.find().select("-password");
 
     res.status(200).json({
@@ -82,21 +157,14 @@ export const getAllUsers = async (req, res) => {
       totalUsers: users.length,
       users,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 
 // GET DOCTORS ONLY
-export const getAllDoctors = async (req, res) => {
-  try {
+export const getAllDoctors = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
@@ -162,41 +230,25 @@ export const getAllDoctors = async (req, res) => {
       pages: Math.ceil(total / limit),
       doctors: doctorsWithDetails,
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
 
 
 // DELETE USER (ADMIN ONLY)
-export const deleteUser = async (req, res) => {
-  try {
+export const deleteUser = asyncHandler(async (req, res) => {
     const user = await User.findByIdAndDelete(req.params.userId);
 
     if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
+      throw new NotFoundError("User not found");
     }
 
     res.status(200).json({
       success: true,
       message: "User deleted successfully",
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 
 
@@ -238,8 +290,7 @@ const getTodayRange = () => {
 
 
 // GET ADMIN DASHBOARD STATS
-export const getAdminDashboardStats = async (req, res) => {
-  try {
+export const getAdminDashboardStats = asyncHandler(async (req, res) => {
     const { startOfDay, endOfDay } = getTodayRange();
 
     const [doctorsCount, patientsCount, appointmentsToday] = await Promise.all([
@@ -280,18 +331,11 @@ export const getAdminDashboardStats = async (req, res) => {
         avgWaitTimeMinutes: avgMinutes,
       },
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});
 
 // ===================== ADMIN ANALYTICS =====================
 
-export const getAdminAnalytics = async (req, res) => {
-  try {
+export const getAdminAnalytics = asyncHandler(async (req, res) => {
     // Get ALL appointments with status + timing (for avg wait time)
     const appointmentsAllTime = await Appointment.find({})
       .select("status startTime endTime doctor");
@@ -416,10 +460,4 @@ export const getAdminAnalytics = async (req, res) => {
         doctorPerformance,
       },
     });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
+});

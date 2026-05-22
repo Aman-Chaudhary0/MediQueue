@@ -3,9 +3,11 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { assets } from '../../assets/assets'
 import authService from '../../api/authService'
+import { useAuth } from '../../context/AuthContext'
 
 const AdminDashNav = () => {
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -19,14 +21,11 @@ const AdminDashNav = () => {
     try {
       setIsLoggingOut(true)
       await authService.logout()
-      // Clear any stored auth data
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      sessionStorage.clear()
+      logout()
       navigate('/login')
     } catch (err) {
       console.error('Logout failed:', err)
-      // Still navigate to login even if logout API fails
+      logout()
       navigate('/login')
     } finally {
       setIsLoggingOut(false)
@@ -72,6 +71,14 @@ const AdminDashNav = () => {
                           className="w-full rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 sm:w-auto"
                         >
                             Analytics
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => navigate('/change-password')}
+                          className="w-full rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-sm font-medium text-blue-700 transition hover:bg-blue-50 sm:w-auto"
+                        >
+                            Change Password
                         </button>
                     </div>
                 </div>

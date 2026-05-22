@@ -21,11 +21,53 @@ const authService = {
     return response.data;
   },
 
+  verifyDoctorOtp: async (email, otp) => {
+    const response = await api.post("/auth/verify-otp", {
+      email,
+      otp,
+    });
+    return response.data;
+  },
+
   // Login (patient, doctor, or admin)
   login: async (email, password) => {
     const response = await api.post("/auth/login", {
       email,
       password,
+    });
+    return response.data;
+  },
+
+  // Forgot password - OTP based (replaces reset link flow)
+  forgotPassword: async (email) => {
+    const response = await api.post("/auth/forgot-password-otp", { email });
+    return response.data;
+  },
+
+  // Verify OTP and reset password
+  verifyForgotPasswordOtp: async (email, otp, newPassword) => {
+    const response = await api.post("/auth/forgot-password-otp/verify", {
+      email,
+      otp,
+      newPassword,
+    });
+    return response.data;
+  },
+
+  resetPassword: async (token, password) => {
+    const response = await api.post("/auth/reset-password", {
+      token,
+      password,
+    });
+    return response.data;
+  },
+
+
+
+  changePassword: async (currentPassword, newPassword) => {
+    const response = await api.post("/auth/change-password", {
+      currentPassword,
+      newPassword,
     });
     return response.data;
   },
@@ -59,6 +101,14 @@ const authService = {
       name,
       email,
       password,
+    });
+    return response.data;
+  },
+
+  verifyDoctorRegistrationOtp: async (email, otp) => {
+    const response = await api.post("/admin/verify-doctor-otp", {
+      email,
+      otp,
     });
     return response.data;
   },

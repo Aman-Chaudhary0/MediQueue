@@ -40,6 +40,41 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    failedLoginAttempts: {
+      type: Number,
+      default: 0,
+    },
+
+    lockUntil: {
+      type: Date,
+      default: null,
+    },
+
+    suspiciousActivityCount: {
+      type: Number,
+      default: 0,
+    },
+
+    passwordResetToken: {
+      type: String,
+      default: null,
+    },
+
+    passwordResetExpiresAt: {
+      type: Date,
+      default: null,
+    },
+
+    refreshTokenHash: {
+      type: String,
+      default: null,
+    },
+
+    refreshTokenExpiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

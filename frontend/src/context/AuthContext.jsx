@@ -2,6 +2,14 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 
 import React, { createContext, useState, useEffect } from "react";
+import { refreshAccessToken } from "../api/axiosConfig.js";
+import {
+  clearStoredSession,
+  getStoredAccessToken,
+  getStoredUser,
+  setStoredSession,
+  TOKEN_STORAGE_EVENT,
+} from "../api/tokenStorage.js";
 
 export const AuthContext = createContext();
 
@@ -10,37 +18,71 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Initialize auth state from localStorage
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    const token = localStorage.getItem("accessToken");
+    const hydrateAuth = async () => {
+      const storedUser = getStoredUser();
+      const token = getStoredAccessToken();
 
-    if (storedUser && token && storedUser !== "undefined") {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser({ ...parsedUser, accessToken: token });
+      if (storedUser && token) {
+        setUser({ ...storedUser, accessToken: token });
         setIsAuthenticated(true);
-      } catch {
-        // If localStorage has corrupted/non-JSON value, fall back to logged-out state
-        setUser(null);
-        setIsAuthenticated(false);
+        setLoading(false);
+        return;
       }
-    }
-    setLoading(false);
+
+      if (storedUser) {
+        setUser(storedUser);
+        setIsAuthenticated(false);
+        setLoading(false);
+
+        try {
+          const refreshedAccessToken = await refreshAccessToken();
+          setUser({ ...storedUser, accessToken: refreshedAccessToken });
+          setIsAuthenticated(true);
+        } catch {
+          clearStoredSession();
+          setUser(null);
+          setIsAuthenticated(false);
+        }
+        return;
+      }
+
+      setUser(null);
+      setIsAuthenticated(false);
+      setLoading(false);
+    };
+
+    hydrateAuth();
+  }, []);
+
+  useEffect(() => {
+    const handleTokenUpdate = () => {
+      const storedUser = getStoredUser();
+      const token = getStoredAccessToken();
+
+      if (storedUser && token) {
+        setUser({ ...storedUser, accessToken: token });
+        setIsAuthenticated(true);
+      } else if (!token) {
+        setUser(storedUser ? { ...storedUser, accessToken: "" } : null);
+        setIsAuthenticated(Boolean(storedUser && token));
+      }
+    };
+
+    window.addEventListener(TOKEN_STORAGE_EVENT, handleTokenUpdate);
+    return () => window.removeEventListener(TOKEN_STORAGE_EVENT, handleTokenUpdate);
   }, []);
 
   const login = (userData, token) => {
     setUser({ ...userData, accessToken: token });
     setIsAuthenticated(true);
-    localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("accessToken", token);
+    setStoredSession(userData, token);
   };
 
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem("user");
-    localStorage.removeItem("accessToken");
+    clearStoredSession();
   };
 
   return (
