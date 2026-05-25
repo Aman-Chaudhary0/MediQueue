@@ -25,7 +25,17 @@ export const getMyPatient = asyncHandler(async (req, res) => {
 
 // CREATE PATIENT
 export const createPatient = asyncHandler(async (req, res) => {
-    const { age, mobileNo, gender, profilepic  } = req.body;
+    const { 
+      age, 
+      mobileNo, 
+      gender, 
+      profilepic,
+      medicalHistory,
+      allergies,
+      currentMedications,
+      emergencyContact,
+      insuranceDetails
+    } = req.body;
 
     // req.user comes from auth middleware
     const patient = await Patient.create({
@@ -33,7 +43,12 @@ export const createPatient = asyncHandler(async (req, res) => {
       age,
       mobileNo,
       gender,
-      profilepic
+      profilepic,
+      medicalHistory: medicalHistory || "",
+      allergies: allergies || "",
+      currentMedications: currentMedications || "",
+      emergencyContact: emergencyContact || {},
+      insuranceDetails: insuranceDetails || {}
     });
 
     res.status(201).json({
@@ -90,11 +105,16 @@ export const updatePatient = asyncHandler(async (req, res) => {
       throw new NotFoundError("Patient not found for this user");
     }
 
-    // Build patient updates from request body (frontend sends: age, fullname, gender, mobileno)
+    // Build patient updates from request body (frontend sends: age, fullname, gender, mobileno, and profile fields)
     const patientUpdates = {};
     if (typeof req.body.age !== "undefined") patientUpdates.age = req.body.age;
     if (typeof req.body.gender !== "undefined") patientUpdates.gender = req.body.gender;
     if (typeof req.body.mobileno !== "undefined") patientUpdates.mobileNo = req.body.mobileno;
+    if (typeof req.body.medicalHistory !== "undefined") patientUpdates.medicalHistory = req.body.medicalHistory;
+    if (typeof req.body.allergies !== "undefined") patientUpdates.allergies = req.body.allergies;
+    if (typeof req.body.currentMedications !== "undefined") patientUpdates.currentMedications = req.body.currentMedications;
+    if (typeof req.body.emergencyContact !== "undefined") patientUpdates.emergencyContact = req.body.emergencyContact;
+    if (typeof req.body.insuranceDetails !== "undefined") patientUpdates.insuranceDetails = req.body.insuranceDetails;
 
     // Update profile pic if a file is provided
     if (req.file) {

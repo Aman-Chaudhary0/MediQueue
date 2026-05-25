@@ -48,7 +48,8 @@ export const sendForgotPasswordOtp = asyncHandler(async (req, res) => {
       { upsert: true, new: true }
     );
 
-    await sendMail({
+    // Send OTP email asynchronously (non-blocking)
+    sendMail({
       to: email,
       subject: "MediQueue password reset OTP",
       text: `Your MediQueue password reset OTP is: ${otp}\n\nThis OTP expires in 10 minutes.`,
@@ -60,6 +61,9 @@ export const sendForgotPasswordOtp = asyncHandler(async (req, res) => {
           <p>This OTP expires in 10 minutes.</p>
         </div>
       `,
+    }).catch((emailError) => {
+      console.error(`Failed to send password reset OTP to ${email}:`, emailError.message);
+      // Log but don't block password reset request
     });
   }
 

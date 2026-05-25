@@ -218,11 +218,15 @@ export const register = asyncHandler(async (req, res) => {
       { upsert: true, new: true }
     );
 
-    // Send OTP email (if email fails, do not create user; inform client)
-    await sendMail({
+    // Send OTP email asynchronously (non-blocking)
+    // If email fails, user can still complete registration but will be informed
+    sendMail({
       to: email,
       subject: "Your MediQueue OTP",
       text: `Hi ${name},\n\nYour OTP for MediQueue registration is: ${otp}\n\nThis OTP will expire in 10 minutes.\n\n— MediQueue Team`,
+    }).catch((emailError) => {
+      console.error(`Failed to send OTP email to ${email}:`, emailError.message);
+      // Log but don't block registration
     });
 
     return res.status(200).json({
@@ -459,7 +463,8 @@ export const forgotPassword = asyncHandler(async (req, res) => {
       }
     );
 
-    await sendMail({
+    // Send email asynchronously (non-blocking)
+    sendMail({
       to: user.email,
       subject: "Reset your MediQueue password",
       text: `Hello ${user.name},\n\nUse the link below to reset your MediQueue password:\n${resetUrl}\n\nThis link expires in 15 minutes.\n\nIf you did not request this, you can ignore this email.`,
@@ -476,6 +481,9 @@ export const forgotPassword = asyncHandler(async (req, res) => {
           <p>If you did not request this, you can safely ignore this email.</p>
         </div>
       `,
+    }).catch((emailError) => {
+      console.error(`Failed to send password reset email to ${user.email}:`, emailError.message);
+      // Log but don't block password reset request
     });
   }
 

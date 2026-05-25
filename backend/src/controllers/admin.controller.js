@@ -59,7 +59,8 @@ export const registerDoctor = asyncHandler(async (req, res) => {
 
     const verificationUrl = getDoctorVerificationUrl(email);
 
-    await sendMail({
+    // Send verification email asynchronously (non-blocking)
+    sendMail({
       to: email,
       subject: "Verify your MediQueue doctor account",
       text: `Hello Dr. ${name},\n\nAn admin invited you to MediQueue. Your OTP is: ${otp}\n\nThis OTP expires in 10 minutes.\n\nComplete verification here: ${verificationUrl}\n\nIf you were not expecting this invitation, please ignore this email.`,
@@ -77,6 +78,9 @@ export const registerDoctor = asyncHandler(async (req, res) => {
           </p>
         </div>
       `,
+    }).catch((emailError) => {
+      console.error(`Failed to send doctor verification email to ${email}:`, emailError.message);
+      // Log but don't block doctor registration
     });
 
     res.status(200).json({

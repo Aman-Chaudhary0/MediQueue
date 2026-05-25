@@ -30,6 +30,21 @@ const PatientProfile = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  // New profile fields
+  const [medicalHistory, setMedicalHistory] = useState("");
+  const [allergies, setAllergies] = useState("");
+  const [currentMedications, setCurrentMedications] = useState("");
+  const [emergencyContact, setEmergencyContact] = useState({
+    name: "",
+    relationship: "",
+    phone: ""
+  });
+  const [insuranceDetails, setInsuranceDetails] = useState({
+    provider: "",
+    policyNumber: "",
+    groupNumber: ""
+  });
+
   const openFilePicker = () => {
     if (fileInputRef.current) {
       // ensure picker opens even after same-file re-selection
@@ -72,6 +87,13 @@ const PatientProfile = () => {
 
         // backend field name is profilepic
         setProfilePic(patient?.profilepic || "https://via.placeholder.com/100");
+
+        // Set new profile fields
+        setMedicalHistory(patient?.medicalHistory || "");
+        setAllergies(patient?.allergies || "");
+        setCurrentMedications(patient?.currentMedications || "");
+        setEmergencyContact(patient?.emergencyContact || { name: "", relationship: "", phone: "" });
+        setInsuranceDetails(patient?.insuranceDetails || { provider: "", policyNumber: "", groupNumber: "" });
       } catch (e) {
         setError(e?.message || "Failed to load patient profile");
       } finally {
@@ -149,6 +171,11 @@ const PatientProfile = () => {
       formData.append("age", age);
       formData.append("gender", gender);
       formData.append("mobileno", mobileNo);
+      formData.append("medicalHistory", medicalHistory);
+      formData.append("allergies", allergies);
+      formData.append("currentMedications", currentMedications);
+      formData.append("emergencyContact", JSON.stringify(emergencyContact));
+      formData.append("insuranceDetails", JSON.stringify(insuranceDetails));
 
       // backend expects multipart field name: profilepic
       if (selectedFile) {
@@ -327,6 +354,124 @@ const PatientProfile = () => {
                 Other
               </button>
             </div>
+          </div>
+
+          {/* Medical History */}
+          <div className="md:col-span-2">
+            <label className="text-sm text-gray-600">Medical History</label>
+            <textarea
+              value={medicalHistory}
+              onChange={(e) => setMedicalHistory(e.target.value)}
+              placeholder="e.g., Diabetes, Hypertension, Previous surgeries"
+              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              rows="3"
+            />
+          </div>
+
+          {/* Allergies */}
+          <div className="md:col-span-2">
+            <label className="text-sm text-gray-600">Allergies</label>
+            <textarea
+              value={allergies}
+              onChange={(e) => setAllergies(e.target.value)}
+              placeholder="e.g., Penicillin, Peanuts, Shellfish"
+              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              rows="2"
+            />
+          </div>
+
+          {/* Current Medications */}
+          <div className="md:col-span-2">
+            <label className="text-sm text-gray-600">Current Medications</label>
+            <textarea
+              value={currentMedications}
+              onChange={(e) => setCurrentMedications(e.target.value)}
+              placeholder="e.g., Metformin 500mg daily, Atorvastatin 20mg"
+              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              rows="3"
+            />
+          </div>
+
+          {/* Emergency Contact Section */}
+          <div className="md:col-span-2 border-t pt-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Emergency Contact</h2>
+          </div>
+
+          {/* Emergency Contact Name */}
+          <div>
+            <label className="text-sm text-gray-600">Contact Name</label>
+            <input
+              type="text"
+              value={emergencyContact.name}
+              onChange={(e) => setEmergencyContact({ ...emergencyContact, name: e.target.value })}
+              placeholder="Full name"
+              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          {/* Emergency Contact Relationship */}
+          <div>
+            <label className="text-sm text-gray-600">Relationship</label>
+            <input
+              type="text"
+              value={emergencyContact.relationship}
+              onChange={(e) => setEmergencyContact({ ...emergencyContact, relationship: e.target.value })}
+              placeholder="e.g., Spouse, Parent, Sibling"
+              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          {/* Emergency Contact Phone */}
+          <div>
+            <label className="text-sm text-gray-600">Phone Number</label>
+            <input
+              type="text"
+              value={emergencyContact.phone}
+              onChange={(e) => setEmergencyContact({ ...emergencyContact, phone: e.target.value })}
+              placeholder="Phone number"
+              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          {/* Insurance Details Section */}
+          <div className="md:col-span-2 border-t pt-6">
+            <h2 className="text-lg font-semibold text-gray-800 mb-4">Insurance Details</h2>
+          </div>
+
+          {/* Insurance Provider */}
+          <div>
+            <label className="text-sm text-gray-600">Insurance Provider</label>
+            <input
+              type="text"
+              value={insuranceDetails.provider}
+              onChange={(e) => setInsuranceDetails({ ...insuranceDetails, provider: e.target.value })}
+              placeholder="e.g., Blue Cross, Aetna"
+              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          {/* Policy Number */}
+          <div>
+            <label className="text-sm text-gray-600">Policy Number</label>
+            <input
+              type="text"
+              value={insuranceDetails.policyNumber}
+              onChange={(e) => setInsuranceDetails({ ...insuranceDetails, policyNumber: e.target.value })}
+              placeholder="Policy number"
+              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+
+          {/* Group Number */}
+          <div>
+            <label className="text-sm text-gray-600">Group Number</label>
+            <input
+              type="text"
+              value={insuranceDetails.groupNumber}
+              onChange={(e) => setInsuranceDetails({ ...insuranceDetails, groupNumber: e.target.value })}
+              placeholder="Group number"
+              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+            />
           </div>
         </div>
 

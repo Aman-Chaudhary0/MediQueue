@@ -52,15 +52,18 @@ export const sendContactMessage = asyncHandler(async (req, res) => {
       </div>
     `;
 
-    // Send email to admin
-    await sendMail({
+    // Send email to admin (non-blocking)
+    sendMail({
       to: adminEmail,
       subject: `New Contact Message from ${name}`,
       text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone}\n\nMessage:\n${message}`,
       html: htmlContent,
+    }).catch((emailError) => {
+      console.error(`Failed to send admin contact notification email:`, emailError.message);
+      // Log but don't block contact form submission
     });
 
-    // Optionally send confirmation email to user
+    // Optionally send confirmation email to user (non-blocking)
     const userConfirmationHtml = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -81,11 +84,14 @@ export const sendContactMessage = asyncHandler(async (req, res) => {
       </div>
     `;
 
-    await sendMail({
+    sendMail({
       to: email,
       subject: "We received your message - Medi-Queue",
       text: `Thank you for contacting us. We have received your message and will get back to you soon.`,
       html: userConfirmationHtml,
+    }).catch((emailError) => {
+      console.error(`Failed to send user confirmation email to ${email}:`, emailError.message);
+      // Log but don't block contact form submission
     });
 
     return res.status(200).json({
