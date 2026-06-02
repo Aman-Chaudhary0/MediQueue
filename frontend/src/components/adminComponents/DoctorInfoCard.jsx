@@ -1,5 +1,5 @@
 import React from 'react'
-import { Phone, Mail, Trash2 } from 'lucide-react'
+import { Phone, Mail, Trash2, CheckCircle2, Ban, PauseCircle, RotateCcw } from 'lucide-react'
 
 const DoctorInfoCard = ({
   doctor,
@@ -9,7 +9,47 @@ const DoctorInfoCard = ({
   onRequestDelete,
   onConfirmDelete,
   onAbortDelete,
+  onWorkflowAction,
+  actionLoading,
 }) => {
+  const renderWorkflowActions = () => {
+    const verificationStatus = String(doctor.verificationStatus || 'approved').toLowerCase()
+    const status = String(doctor.status || '').toLowerCase()
+
+    const actions = []
+
+    if (verificationStatus === 'pending') {
+      actions.push({ key: 'approve', label: 'Approve', icon: CheckCircle2, className: 'border-green-200 text-green-700 hover:bg-green-50' })
+      actions.push({ key: 'reject', label: 'Reject', icon: Ban, className: 'border-red-200 text-red-600 hover:bg-red-50' })
+    } else if (verificationStatus === 'suspended') {
+      actions.push({ key: 'reactivate', label: 'Reactivate', icon: RotateCcw, className: 'border-green-200 text-green-700 hover:bg-green-50' })
+    } else if (status === 'active') {
+      actions.push({ key: 'deactivate', label: 'Deactivate', icon: PauseCircle, className: 'border-yellow-200 text-yellow-700 hover:bg-yellow-50' })
+      actions.push({ key: 'suspend', label: 'Suspend', icon: Ban, className: 'border-red-200 text-red-600 hover:bg-red-50' })
+    } else if (verificationStatus === 'approved') {
+      actions.push({ key: 'reactivate', label: 'Reactivate', icon: RotateCcw, className: 'border-green-200 text-green-700 hover:bg-green-50' })
+    }
+
+    return actions.map((action) => {
+      const Icon = action.icon
+
+      return (
+        <button
+          key={action.key}
+          type="button"
+          onClick={() => onWorkflowAction?.(doctor.doctorProfileId, action.key)}
+          disabled={actionLoading}
+          className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium disabled:opacity-60 ${action.className}`}
+        >
+          <Icon size={18} />
+          {action.label}
+        </button>
+      )
+    })
+  }
+
+  const workflowActions = renderWorkflowActions()
+
   if (!isTableRow) {
     return (
       <div key={index} className="rounded-2xl border border-gray-100 p-4 shadow-sm">
@@ -76,7 +116,8 @@ const DoctorInfoCard = ({
           </div>
         </div>
 
-        <div className="mt-4 flex items-center gap-3">
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {workflowActions}
           {!isConfirmingDelete ? (
             <button
               type="button"
@@ -154,6 +195,7 @@ const DoctorInfoCard = ({
       </td>
 
       <td>
+        <div className="space-y-2">
         <span
           className={`px-3 py-1 rounded-full text-xs font-medium ${
             doctor.status === "Active"
@@ -165,10 +207,15 @@ const DoctorInfoCard = ({
         >
           {doctor.status}
         </span>
+        <p className="text-xs font-medium capitalize text-gray-500">
+          {doctor.verificationStatus}
+        </p>
+        </div>
       </td>
 
       <td>
-        <div className="flex items-center justify-center">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {workflowActions}
           {!isConfirmingDelete ? (
             <button
               type="button"

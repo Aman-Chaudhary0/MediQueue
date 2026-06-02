@@ -80,6 +80,12 @@ const doctorSchema = new mongoose.Schema(
       default: "active",
     },
 
+    verificationStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected", "suspended"],
+      default: "approved",
+    },
+
     // Availability
     isAvailable: {
       type: Boolean,

@@ -1,6 +1,7 @@
 import Appointment from "../models/appointment.model.js";
 import Patient from "../models/patient.model.js";
 import Doctor from "../models/docter.model.js";
+import Schedule from "../models/Schedule.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { NotFoundError, ValidationError } from "../utils/errors.js";
 
@@ -52,6 +53,12 @@ const parseTimeTo24Hour = (timeValue) => {
   if (period === "AM" && hours === 12) hours = 0;
 
   return { hours, minutes };
+};
+
+const parseTimeToMinutes = (timeValue) => {
+  const parsedTime = parseTimeTo24Hour(timeValue);
+  if (!parsedTime) return null;
+  return parsedTime.hours * 60 + parsedTime.minutes;
 };
 
 
@@ -123,41 +130,102 @@ const cancelExpiredAppointments = async () => {
 
 
 // It creates all appointment slots for the day.
-const buildDailySlots = () => {
+const buildDailySlots = ({
+  startMinutes = WORKING_HOURS.startMinutes,
+  endMinutes = WORKING_HOURS.endMinutes,
+  slotDuration = SLOT_DURATION_IN_MINUTES,
+  breaks = [],
+  maxPatientsPerDay,
+} = {}) => {
   const slots = [];
+  const parsedBreaks = breaks
+    .map((breakItem) => ({
+      startMinutes: parseTimeToMinutes(breakItem?.startTime),
+      endMinutes: parseTimeToMinutes(breakItem?.endTime),
+    }))
+    .filter(
+      (breakItem) =>
+        breakItem.startMinutes !== null &&
+        breakItem.endMinutes !== null &&
+        breakItem.endMinutes > breakItem.startMinutes
+    );
 
   for (
-    let startMinutes = WORKING_HOURS.startMinutes;
-    startMinutes < WORKING_HOURS.endMinutes;
-    startMinutes += SLOT_DURATION_IN_MINUTES
+    let currentStartMinutes = startMinutes;
+    currentStartMinutes < endMinutes;
+    currentStartMinutes += slotDuration
   ) {
-    const endMinutes = startMinutes + SLOT_DURATION_IN_MINUTES;
-    if (endMinutes > WORKING_HOURS.endMinutes) break;
+    const currentEndMinutes = currentStartMinutes + slotDuration;
+    if (currentEndMinutes > endMinutes) break;
 
-    const startTime = formatMinutesToTime(startMinutes);
+    const isDuringBreak = parsedBreaks.some(
+      (breakItem) =>
+        currentStartMinutes < breakItem.endMinutes &&
+        currentEndMinutes > breakItem.startMinutes
+    );
+
+    if (isDuringBreak) continue;
+
+    const startTime = formatMinutesToTime(currentStartMinutes);
     if (EXCLUDED_SLOT_START_TIMES.has(startTime)) continue;
 
     slots.push({
       startTime,
-      endTime: formatMinutesToTime(endMinutes),
-      label: `${startTime} - ${formatMinutesToTime(endMinutes)}`,
+      endTime: formatMinutesToTime(currentEndMinutes),
+      label: `${startTime} - ${formatMinutesToTime(currentEndMinutes)}`,
       period:
-        startMinutes < 12 * 60
+        currentStartMinutes < 12 * 60
           ? "Morning"
-          : startMinutes < 17 * 60
+          : currentStartMinutes < 17 * 60
             ? "Afternoon"
             : "Evening",
     });
   }
 
-  return slots;
+  return maxPatientsPerDay ? slots.slice(0, maxPatientsPerDay) : slots;
+};
+
+const getDailySlotsForDoctorDate = async (doctor, requestedDate) => {
+  const isApproved =
+    !doctor.verificationStatus || doctor.verificationStatus === "approved";
+
+  if (!isApproved || doctor.status !== "active" || doctor.isAvailable === false) {
+    return [];
+  }
+
+  const schedule = await Schedule.findOne({
+    doctor: doctor._id,
+    dayOfWeek: requestedDate.getDay(),
+  });
+
+  if (!schedule) {
+    return buildDailySlots();
+  }
+
+  if (!schedule.isAvailable) {
+    return [];
+  }
+
+  const startMinutes = parseTimeToMinutes(schedule.startTime);
+  const endMinutes = parseTimeToMinutes(schedule.endTime);
+
+  if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+    return [];
+  }
+
+  return buildDailySlots({
+    startMinutes,
+    endMinutes,
+    slotDuration: schedule.slotDuration || SLOT_DURATION_IN_MINUTES,
+    breaks: schedule.breaks || [],
+    maxPatientsPerDay: schedule.maxPatientsPerDay,
+  });
 };
 
 
 
 // get token no. according to slot
-const getTokenNumberForSlot = (startTime) => {
-  const dailySlots = buildDailySlots();
+const getTokenNumberForSlot = (dailySlots, startTime) => {
   const slotIndex = dailySlots.findIndex((slot) => slot.startTime === startTime);
 
   if (slotIndex === -1) {
@@ -191,6 +259,7 @@ export const getAvailableSlots = asyncHandler(async (req, res) => {
     }
 
     const { startOfDay, endOfDay } = getDayRange(requestedDate);
+    const dailySlots = await getDailySlotsForDoctorDate(doctor, requestedDate);
 
     const existingAppointments = await Appointment.find({
       doctor: doctorId,
@@ -206,7 +275,7 @@ export const getAvailableSlots = asyncHandler(async (req, res) => {
     );
 
     const now = new Date();
-    const availableSlots = buildDailySlots().filter((slot) => {
+    const availableSlots = dailySlots.filter((slot) => {
       if (bookedSlotKeys.has(`${slot.startTime}-${slot.endTime}`)) {
         return false;
       }
@@ -288,7 +357,19 @@ export const bookAppointment = asyncHandler(async (req, res) => {
       throw new ValidationError("Time slot already booked for this doctor");
     }
 
-    const tokenNumber = getTokenNumberForSlot(startTime);
+    const dailySlots = await getDailySlotsForDoctorDate(
+      doctor,
+      new Date(appointmentDate)
+    );
+    const selectedDailySlot = dailySlots.find(
+      (slot) => slot.startTime === startTime && slot.endTime === endTime
+    );
+
+    if (!selectedDailySlot) {
+      throw new ValidationError("Doctor is not available for the selected slot");
+    }
+
+    const tokenNumber = getTokenNumberForSlot(dailySlots, startTime);
     if (!tokenNumber) {
       throw new ValidationError("Invalid slot selected");
     }
@@ -621,4 +702,76 @@ export const updateAppointmentStatus = asyncHandler(async (req, res) => {
       message: "Appointment status updated",
       appointment,
     });
+});
+
+
+// ADD CONSULTATION NOTES (by doctor after appointment)
+export const addConsultationNotes = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const { consultationNotes, diagnosis, prescription, followUpRequired, followUpNotes } = req.body;
+
+  const appointment = await Appointment.findById(appointmentId)
+    .populate("doctor", "user")
+    .populate("patient", "user");
+
+  if (!appointment) {
+    throw new NotFoundError("Appointment not found");
+  }
+
+  // Verify doctor is updating their own appointment
+  if (String(appointment.doctor.user) !== String(req.user._id)) {
+    throw new ValidationError("You can only add notes to your own appointments");
+  }
+
+  // Update appointment with consultation details
+  appointment.consultationNotes = consultationNotes || appointment.consultationNotes;
+  appointment.diagnosis = diagnosis || appointment.diagnosis;
+  appointment.prescription = prescription || appointment.prescription;
+  appointment.followUpRequired = followUpRequired !== undefined ? followUpRequired : appointment.followUpRequired;
+  appointment.followUpNotes = followUpNotes || appointment.followUpNotes;
+  appointment.status = "completed";
+
+  await appointment.save();
+
+  res.status(200).json({
+    success: true,
+    message: "Consultation notes added successfully",
+    appointment,
+  });
+});
+
+
+// GET CONSULTATION NOTES FOR APPOINTMENT
+export const getConsultationNotes = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+
+  const appointment = await Appointment.findById(appointmentId)
+    .populate("doctor")
+    .populate("patient", "user");
+
+  if (!appointment) {
+    throw new NotFoundError("Appointment not found");
+  }
+
+  // Patient can view their own notes, doctor can view their own notes, admin can view all
+  if (req.user.role === "patient") {
+    if (String(appointment.patient._id) !== String(req.user._id)) {
+      throw new ValidationError("You can only view your own consultation notes");
+    }
+  } else if (req.user.role === "doctor") {
+    if (String(appointment.doctor.user) !== String(req.user._id)) {
+      throw new ValidationError("You can only view your own consultation notes");
+    }
+  }
+
+  res.status(200).json({
+    success: true,
+    consultationNotes: {
+      notes: appointment.consultationNotes,
+      diagnosis: appointment.diagnosis,
+      prescription: appointment.prescription,
+      followUpRequired: appointment.followUpRequired,
+      followUpNotes: appointment.followUpNotes,
+    },
+  });
 });

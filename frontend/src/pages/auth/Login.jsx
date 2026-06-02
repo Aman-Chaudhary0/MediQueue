@@ -47,7 +47,7 @@ const Login = () => {
 
             if (response.success || response.message === "Login successful") {
                 setSuccess('Login successful! Redirecting...')
-                login(response.user, response.accessToken)
+                login(response.user, response.accessToken, response.refreshToken)
 
                 // Redirect based on role
                 setTimeout(() => {

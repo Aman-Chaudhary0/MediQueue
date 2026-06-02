@@ -141,7 +141,12 @@ export const getAllDoctors = asyncHandler(async (req, res) => {
     const { specialization, department, hospital, status } = req.query;
 
     // Build filter object
-    const filter = {};
+    const filter = {
+      $or: [
+        { verificationStatus: "approved" },
+        { verificationStatus: { $exists: false } },
+      ],
+    };
     if (specialization) filter.specialization = new RegExp(specialization, "i");
     if (department) filter.department = new RegExp(department, "i");
     if (hospital) filter.hospital = new RegExp(hospital, "i");
@@ -320,10 +325,20 @@ export const searchDoctors = asyncHandler(async (req, res) => {
     }
 
     const filter = {
-      $or: [
-        { specialization: new RegExp(query, "i") },
-        { department: new RegExp(query, "i") },
-        { hospital: new RegExp(query, "i") },
+      $and: [
+        {
+          $or: [
+            { verificationStatus: "approved" },
+            { verificationStatus: { $exists: false } },
+          ],
+        },
+        {
+          $or: [
+            { specialization: new RegExp(query, "i") },
+            { department: new RegExp(query, "i") },
+            { hospital: new RegExp(query, "i") },
+          ],
+        },
       ],
     };
 

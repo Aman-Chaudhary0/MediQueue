@@ -43,6 +43,37 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    // Consultation Notes
+    consultationNotes: {
+      type: String,
+      default: "",
+      description: "Doctor's notes about the consultation",
+    },
+
+    // Diagnosis
+    diagnosis: {
+      type: String,
+      default: "",
+    },
+
+    // Prescription
+    prescription: {
+      type: String,
+      default: "",
+    },
+
+    // Follow-up appointment needed
+    followUpRequired: {
+      type: Boolean,
+      default: false,
+    },
+
+    // Follow-up details
+    followUpNotes: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

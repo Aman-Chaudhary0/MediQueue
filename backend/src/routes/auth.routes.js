@@ -11,6 +11,7 @@ import {
   refreshTokenController,
 } from "../controllers/auth.controller.js";
 
+import { sendMail } from "../utils/email.js";
 import { protect } from "../middlewares/auth.middleware.js";
 
 import { authorizeRoles } from "../middlewares/role.middleware.js";
@@ -42,6 +43,32 @@ router.post("/forgot-password", passwordResetRateLimiter, validateForgotPassword
 router.post("/reset-password", passwordResetRateLimiter, validateResetPasswordInput, resetPassword);
 
 router.post("/change-password", protect, authenticatedApiRateLimiter, validateChangePasswordInput, changePassword);
+
+// TEST EMAIL ENDPOINT (development only)
+router.post("/test-email", async (req, res) => {
+  if (process.env.NODE_ENV === "production") {
+    return res.status(403).json({ error: "Not available in production" });
+  }
+
+  const { to } = req.body;
+  if (!to) {
+    return res.status(400).json({ error: "Email 'to' required" });
+  }
+
+  try {
+    console.log(`\n📧 Testing email to: ${to}`);
+    const result = await sendMail({
+      to,
+      subject: "Test Email from MediQueue",
+      text: "This is a test email to verify your Gmail OAuth2 configuration is working.",
+      html: "<h2>Test Email from MediQueue</h2><p>If you received this, your email configuration is correct!</p>",
+    });
+    res.json({ success: true, message: "Test email sent", messageId: result.messageId });
+  } catch (error) {
+    console.error("\n❌ Email test failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 
 // ADMIN ONLY ROUTE

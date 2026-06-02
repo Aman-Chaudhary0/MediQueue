@@ -1,12 +1,5 @@
 import nodemailer from "nodemailer";
 
-const requiredEnv = [
-  "GOOGLE_CLIENT_ID",
-  "GOOGLE_CLIENT_SECRET",
-  "GOOGLE_REFRESH_TOKEN",
-  "GOOGLE_USER",
-];
-
 function getEnvOrThrow(name) {
   const value = process.env[name];
   if (!value) throw new Error(`Missing required environment variable: ${name}`);
@@ -18,20 +11,23 @@ let transporter;
 function getTransporter() {
   if (transporter) return transporter;
 
-  // Validate required environment variables once at startup.
-  requiredEnv.forEach((name) => getEnvOrThrow(name));
+  console.log("Initializing Gmail transporter...");
+  const googleUser = getEnvOrThrow("GOOGLE_USER");
+  const appPassword = process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASSWORD;
+  
+  if (!appPassword) {
+    throw new Error("Missing GMAIL_APP_PASSWORD or GMAIL_PASSWORD in .env");
+  }
 
   transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      type: "OAuth2",
-      user: process.env.GOOGLE_USER,
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      refreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+      user: googleUser,
+      pass: appPassword,
     },
   });
 
+  console.log(`✓ Gmail transporter initialized for ${googleUser}`);
   return transporter;
 }
 
@@ -56,8 +52,14 @@ export async function sendMail({ to, subject, text, html }) {
     html,
   };
 
-  const transport = getTransporter();
-
-  // Will throw if OAuth2 is misconfigured.
-  return await transport.sendMail(mail);
+  try {
+    console.log(`Attempting to send email to ${to}...`);
+    const transport = getTransporter();
+    const result = await transport.sendMail(mail);
+    console.log(`✓ Email sent successfully to ${to}`, result.messageId);
+    return result;
+  } catch (error) {
+    console.error(`✗ Failed to send email to ${to}:`, error.message);
+    throw error;
+  }
 }

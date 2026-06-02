@@ -218,22 +218,39 @@ export const register = asyncHandler(async (req, res) => {
       { upsert: true, new: true }
     );
 
-    // Send OTP email asynchronously (non-blocking)
-    // If email fails, user can still complete registration but will be informed
-    sendMail({
-      to: email,
-      subject: "Your MediQueue OTP",
-      text: `Hi ${name},\n\nYour OTP for MediQueue registration is: ${otp}\n\nThis OTP will expire in 10 minutes.\n\n— MediQueue Team`,
-    }).catch((emailError) => {
-      console.error(`Failed to send OTP email to ${email}:`, emailError.message);
-      // Log but don't block registration
-    });
+    // Send OTP email - blocking to catch errors
+    try {
+      console.log(`Sending OTP to ${email}...`);
+      await sendMail({
+        to: email,
+        subject: "Your MediQueue OTP",
+        text: `Hi ${name},\n\nYour OTP for MediQueue registration is: ${otp}\n\nThis OTP will expire in 10 minutes.\n\n— MediQueue Team`,
+        html: `
+          <h2>Welcome to MediQueue, ${name}!</h2>
+          <p>Your OTP for registration is:</p>
+          <h1 style="color: #007bff; font-size: 36px; letter-spacing: 5px;">${otp}</h1>
+          <p>This OTP will expire in 10 minutes.</p>
+          <p style="color: #666; font-size: 12px;">— MediQueue Team</p>
+        `,
+      });
+      console.log(`✓ OTP email sent successfully to ${email}`);
+    } catch (emailError) {
+      console.error(`✗ Email sending failed for ${email}:`, emailError);
+      throw emailError;
+    }
 
-    return res.status(200).json({
+    const response = {
       success: true,
-      message: "If the email address is correct, OTP has been sent. Please check your inbox.",
+      message: "OTP has been sent to your email. Please check your inbox and spam folder.",
       email,
-    });
+    };
+
+    // In development, include OTP for testing (remove in production)
+    if (process.env.NODE_ENV !== "production") {
+      response.otp = otp;
+    }
+
+    return res.status(200).json(response);
 });
 
 
@@ -242,36 +259,50 @@ export const register = asyncHandler(async (req, res) => {
 export const login = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
+    console.log("\n📍 Login attempt for:", email);
+
     // check user
     const user = await User.findOne({ email });
 
     if (!user) {
+      console.error("✗ User not found:", email);
       throw new UnauthorizedError("Invalid credentials");
     }
 
+    console.log("✓ User found:", user.email, "| Role:", user.role);
+
     if (isAccountLocked(user)) {
+      console.error("✗ Account locked:", email);
       throw new UnauthorizedError("Account is temporarily locked due to repeated failed login attempts. Please try again later.");
     }
 
     // compare password
+    console.log("Comparing passwords...");
     const isMatch = await verifyPassword(password, user.password);
 
     if (!isMatch) {
+      console.error("✗ Password mismatch for:", email);
       await registerFailedLoginAttempt(user);
       throw new UnauthorizedError("Invalid credentials");
     }
+
+    console.log("✓ Password verified");
 
     if (user.failedLoginAttempts || user.lockUntil) {
       await resetLoginLock(user._id);
     }
 
     // Generate access and refresh tokens
-    const { accessToken } = await issueAuthTokens(user._id, res);
+    console.log("✓ Generating tokens...");
+    const { accessToken, refreshToken } = await issueAuthTokens(user._id, res);
+
+    console.log("✓ Login successful for:", email);
 
     res.status(200).json({
       success: true,
       message: "Login successful",
       accessToken,
+      refreshToken,
       user: {
         id: user._id,
         name: user.name,
@@ -385,32 +416,42 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 export const refreshTokenController = asyncHandler(async (req, res) => {
     let token;
 
+    console.log("\n📍 Refresh token request received");
+    console.log("Authorization header:", req.headers.authorization ? "present" : "missing");
+    console.log("Cookie refresh token:", req.cookies.refreshToken ? "present" : "missing");
+
     // Get refresh token from Bearer header
     if (
       req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
+      req.headers.authorization.startsWith("Bearer ")
     ) {
       token = req.headers.authorization.split(" ")[1];
+      console.log("✓ Token extracted from Authorization header");
     }
 
     // Get refresh token from cookies if not in header
     if (!token && req.cookies.refreshToken) {
       token = req.cookies.refreshToken;
+      console.log("✓ Token from cookie");
     }
 
     if (!token) {
+      console.error("✗ No refresh token found");
       throw new UnauthorizedError("No refresh token provided");
     }
 
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET);
+      console.log("✓ Token verified for user:", decoded.id);
     } catch (error) {
+      console.error("✗ Token verification failed:", error.message);
       clearAuthCookies(res);
       throw error;
     }
 
     if (decoded.type !== "refresh") {
+      console.error("✗ Invalid token type:", decoded.type);
       clearAuthCookies(res);
       throw new UnauthorizedError("Invalid refresh token");
     }
@@ -418,28 +459,33 @@ export const refreshTokenController = asyncHandler(async (req, res) => {
     const user = await User.findById(decoded.id).select("refreshTokenHash refreshTokenExpiresAt lockUntil");
 
     if (!user?.refreshTokenHash || !user?.refreshTokenExpiresAt) {
+      console.error("✗ Refresh session not found");
       clearAuthCookies(res);
       throw new UnauthorizedError("Refresh session not found");
     }
 
     if (new Date(user.refreshTokenExpiresAt).getTime() <= Date.now()) {
+      console.error("✗ Refresh token expired");
       await clearRefreshSession(decoded.id);
       clearAuthCookies(res);
       throw new UnauthorizedError("Refresh token expired");
     }
 
     if (user.refreshTokenHash !== hashToken(token)) {
+      console.error("✗ Token hash mismatch");
       await lockAccountForSuspiciousActivity(decoded.id);
       clearAuthCookies(res);
       throw new UnauthorizedError("Suspicious activity detected. Your account has been temporarily locked.");
     }
 
+    console.log("✓ Issuing new tokens...");
     const { accessToken, refreshToken } = await issueAuthTokens(decoded.id, res);
 
     res.status(200).json({
       success: true,
       message: "Tokens refreshed successfully",
       accessToken,
+      refreshToken,
       refreshTokenExpiresAt: new Date(Date.now() + REFRESH_TOKEN_COOKIE_MAX_AGE_MS).toISOString(),
     });
 });

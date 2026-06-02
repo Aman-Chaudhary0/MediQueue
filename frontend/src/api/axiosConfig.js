@@ -2,6 +2,7 @@ import axios from "axios";
 import {
   clearStoredSession,
   getStoredAccessToken,
+  getStoredRefreshToken,
   updateStoredAccessToken,
 } from "./tokenStorage.js";
 
@@ -21,7 +22,13 @@ export const refreshAccessToken = async () => {
       .post(
         `${API_BASE_URL}/auth/refresh-token`,
         {},
-        { withCredentials: true, timeout: 10000 }
+        { 
+          withCredentials: true, 
+          timeout: 10000,
+          headers: {
+            "Authorization": `Bearer ${getStoredRefreshToken()}`
+          }
+        }
       )
       .then((response) => {
         const newAccessToken = response.data?.accessToken || "";
@@ -29,6 +36,7 @@ export const refreshAccessToken = async () => {
         return newAccessToken;
       })
       .catch((error) => {
+        console.error("Refresh token error:", error.response?.data || error.message);
         clearStoredSession();
         throw error;
       })

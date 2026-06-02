@@ -73,10 +73,10 @@ export const AuthProvider = ({ children }) => {
     return () => window.removeEventListener(TOKEN_STORAGE_EVENT, handleTokenUpdate);
   }, []);
 
-  const login = (userData, token) => {
+  const login = (userData, token, refreshToken) => {
     setUser({ ...userData, accessToken: token });
     setIsAuthenticated(true);
-    setStoredSession(userData, token);
+    setStoredSession(userData, token, refreshToken);
   };
 
   const logout = () => {

@@ -248,6 +248,7 @@ export const validateDoctorProfileInput = runValidation((req) => {
 });
 
 export const validatePatientProfileInput = runValidation((req) => {
+  // Validate phone number (both mobileNo and mobileno variations)
   if (typeof req.body.mobileNo !== "undefined") {
     ensurePhoneNumber(req.body.mobileNo);
   }
@@ -256,7 +257,121 @@ export const validatePatientProfileInput = runValidation((req) => {
     ensurePhoneNumber(req.body.mobileno);
   }
 
-  if (typeof req.body.age !== "undefined" && Number(req.body.age) < 0) {
-    throw new ValidationError("Age must be a positive number");
+  // Validate age
+  if (typeof req.body.age !== "undefined" && req.body.age !== "") {
+    const age = Number(req.body.age);
+    if (isNaN(age) || age < 0 || age > 150) {
+      throw new ValidationError("Age must be a valid number between 0 and 150");
+    }
+  }
+
+  // Validate medical history (optional string)
+  if (typeof req.body.medicalHistory !== "undefined" && req.body.medicalHistory !== null) {
+    if (typeof req.body.medicalHistory !== "string") {
+      throw new ValidationError("Medical history must be a text field");
+    }
+    if (req.body.medicalHistory.length > 2000) {
+      throw new ValidationError("Medical history cannot exceed 2000 characters");
+    }
+  }
+
+  // Validate allergies (optional string)
+  if (typeof req.body.allergies !== "undefined" && req.body.allergies !== null) {
+    if (typeof req.body.allergies !== "string") {
+      throw new ValidationError("Allergies must be a text field");
+    }
+    if (req.body.allergies.length > 1000) {
+      throw new ValidationError("Allergies cannot exceed 1000 characters");
+    }
+  }
+
+  // Validate current medications (optional string)
+  if (typeof req.body.currentMedications !== "undefined" && req.body.currentMedications !== null) {
+    if (typeof req.body.currentMedications !== "string") {
+      throw new ValidationError("Current medications must be a text field");
+    }
+    if (req.body.currentMedications.length > 2000) {
+      throw new ValidationError("Current medications cannot exceed 2000 characters");
+    }
+  }
+
+  // Validate emergency contact (optional object)
+  if (typeof req.body.emergencyContact !== "undefined" && req.body.emergencyContact !== null) {
+    let emergencyContactObj;
+    
+    // Handle string JSON from FormData
+    if (typeof req.body.emergencyContact === "string") {
+      try {
+        emergencyContactObj = JSON.parse(req.body.emergencyContact);
+      } catch (e) {
+        throw new ValidationError("Emergency contact must be a valid object");
+      }
+    } else {
+      emergencyContactObj = req.body.emergencyContact;
+    }
+
+    if (typeof emergencyContactObj !== "object") {
+      throw new ValidationError("Emergency contact must be an object");
+    }
+
+    // Validate name (optional)
+    if (emergencyContactObj.name !== undefined && emergencyContactObj.name !== "") {
+      if (typeof emergencyContactObj.name !== "string" || emergencyContactObj.name.length > 100) {
+        throw new ValidationError("Emergency contact name must be a text field not exceeding 100 characters");
+      }
+    }
+
+    // Validate relationship (optional)
+    if (emergencyContactObj.relationship !== undefined && emergencyContactObj.relationship !== "") {
+      if (typeof emergencyContactObj.relationship !== "string" || emergencyContactObj.relationship.length > 50) {
+        throw new ValidationError("Relationship must be a text field not exceeding 50 characters");
+      }
+    }
+
+    // Validate phone (optional, but if present must be valid)
+    if (emergencyContactObj.phone !== undefined && emergencyContactObj.phone !== "") {
+      ensurePhoneNumber(emergencyContactObj.phone, "Emergency contact phone number is invalid");
+    }
+  }
+
+  // Validate insurance details (optional object)
+  if (typeof req.body.insuranceDetails !== "undefined" && req.body.insuranceDetails !== null) {
+    let insuranceObj;
+    
+    // Handle string JSON from FormData
+    if (typeof req.body.insuranceDetails === "string") {
+      try {
+        insuranceObj = JSON.parse(req.body.insuranceDetails);
+      } catch (e) {
+        throw new ValidationError("Insurance details must be a valid object");
+      }
+    } else {
+      insuranceObj = req.body.insuranceDetails;
+    }
+
+    if (typeof insuranceObj !== "object") {
+      throw new ValidationError("Insurance details must be an object");
+    }
+
+    // Validate provider (optional)
+    if (insuranceObj.provider !== undefined && insuranceObj.provider !== "") {
+      if (typeof insuranceObj.provider !== "string" || insuranceObj.provider.length > 100) {
+        throw new ValidationError("Insurance provider must not exceed 100 characters");
+      }
+    }
+
+    // Validate policy number (optional)
+    if (insuranceObj.policyNumber !== undefined && insuranceObj.policyNumber !== "") {
+      if (typeof insuranceObj.policyNumber !== "string" || insuranceObj.policyNumber.length > 50) {
+        throw new ValidationError("Policy number must not exceed 50 characters");
+      }
+    }
+
+    // Validate group number (optional)
+    if (insuranceObj.groupNumber !== undefined && insuranceObj.groupNumber !== "") {
+      if (typeof insuranceObj.groupNumber !== "string" || insuranceObj.groupNumber.length > 50) {
+        throw new ValidationError("Group number must not exceed 50 characters");
+      }
+    }
   }
 });

@@ -22,6 +22,9 @@ const ManageDoctors = () => {
 
   const [deletingDoctorId, setDeletingDoctorId] = useState(null);
   const [deleteError, setDeleteError] = useState("");
+  const [workflowLoadingId, setWorkflowLoadingId] = useState(null);
+  const [workflowError, setWorkflowError] = useState("");
+  const [workflowSuccess, setWorkflowSuccess] = useState("");
 
   // Fetch doctors with pagination and search
   const fetchDoctors = useCallback(
@@ -135,6 +138,29 @@ const ManageDoctors = () => {
         await fetchDoctors(1);
       } catch (err) {
         setDeleteError(err?.response?.data?.message || "Failed to delete doctor");
+      }
+    },
+    [fetchDoctors]
+  );
+
+  const handleWorkflowAction = useCallback(
+    async (doctorProfileId, action) => {
+      if (!doctorProfileId) return;
+
+      try {
+        setWorkflowLoadingId(doctorProfileId);
+        setWorkflowError("");
+        setWorkflowSuccess("");
+
+        const response = await authService.updateDoctorApprovalStatus(doctorProfileId, action);
+        setWorkflowSuccess(response?.message || "Doctor status updated");
+        setPage(1);
+        setDoctors([]);
+        await fetchDoctors(1);
+      } catch (err) {
+        setWorkflowError(err?.response?.data?.message || "Failed to update doctor status");
+      } finally {
+        setWorkflowLoadingId(null);
       }
     },
     [fetchDoctors]

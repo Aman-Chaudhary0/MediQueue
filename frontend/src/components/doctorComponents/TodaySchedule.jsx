@@ -1,6 +1,6 @@
 import React from 'react'
 
-const TodaySchedule = ({ item, statusStyles }) => {
+const TodaySchedule = ({ item, statusStyles, actionLoading, onMarkCompleted, onOpenNotes }) => {
 
 // ==========================================================================================================================================================================
 
@@ -43,14 +43,35 @@ const TodaySchedule = ({ item, statusStyles }) => {
                         </span>
                     </div>
 
-                    <span
-                        className={`w-fit text-xs px-3 py-1 rounded-lg capitalize ${statusStyles[item.status]
-                            }`}
-                    >
-                        {item.status === "inprogress"
-                            ? "In Progress"
-                            : item.status}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span
+                            className={`w-fit text-xs px-3 py-1 rounded-lg capitalize ${statusStyles[item.status]
+                                }`}
+                        >
+                            {item.status === "inprogress"
+                                ? "In Progress"
+                                : item.status}
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={() => onOpenNotes?.(item)}
+                            className="rounded-lg border border-blue-200 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50"
+                        >
+                            Notes
+                        </button>
+
+                        {item.status !== "completed" ? (
+                            <button
+                                type="button"
+                                onClick={() => onMarkCompleted?.(item.id)}
+                                disabled={actionLoading}
+                                className="rounded-lg bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-60"
+                            >
+                                Complete
+                            </button>
+                        ) : null}
+                    </div>
                 </div>
             </div>
         </div>

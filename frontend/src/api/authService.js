@@ -188,6 +188,15 @@ const authService = {
     return response.data;
   },
 
+  // Appointments: Add consultation notes
+  addConsultationNotes: async (appointmentId, notesData) => {
+    const response = await api.put(
+      `/appointments/${appointmentId}/consultation-notes`,
+      notesData
+    );
+    return response.data;
+  },
+
   // Appointments: Cancel appointment
   cancelAppointment: async (appointmentId) => {
     const response = await api.put(`/appointments/${appointmentId}/cancel`);
@@ -236,9 +245,57 @@ const authService = {
     return response.data;
   },
 
+  // Admin: update doctor approval/status workflow
+  updateDoctorApprovalStatus: async (doctorId, action) => {
+    const response = await api.patch(`/admin/doctors/${doctorId}/approval`, {
+      action,
+    });
+    return response.data;
+  },
+
+  // Admin: generate platform report
+  generatePlatformReport: async () => {
+    const response = await api.get("/admin/reports/platform");
+    return response.data;
+  },
+
   // Admin: delete user (admin deletes by userId)
   deleteUser: async (userId) => {
     const response = await api.delete(`/admin/users/${userId}`);
+    return response.data;
+  },
+
+  // Doctor: get current doctor profile
+  getCurrentDoctorProfile: async () => {
+    const response = await api.get("/doctor/me");
+    return response.data;
+  },
+
+  // Doctor schedule: get weekly schedule
+  getDoctorSchedule: async () => {
+    const response = await api.get("/schedule");
+    return response.data;
+  },
+
+  // Doctor schedule: set one day schedule
+  setDoctorSchedule: async (scheduleData) => {
+    const response = await api.post("/schedule", scheduleData);
+    return response.data;
+  },
+
+  // Doctor schedule: update consultation fee
+  updateConsultationFee: async (consultationFee) => {
+    const response = await api.put("/schedule/fee/update", {
+      consultationFee,
+    });
+    return response.data;
+  },
+
+  // Doctor schedule: update availability
+  updateDoctorAvailability: async (isAvailable) => {
+    const response = await api.put("/schedule/availability/update", {
+      isAvailable,
+    });
     return response.data;
   },
 };

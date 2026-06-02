@@ -8,6 +8,7 @@ import patientRoutes from "./routes/patient.routes.js";
 import appointmentRoutes from "./routes/appointment.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import doctorRoutes from "./routes/doctor.routes.js";
+import scheduleRoutes from "./routes/schedule.routes.js";
 import uploadRoutes from "./routes/upload.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware.js";
@@ -37,6 +38,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/patient", patientRoutes);
 app.use("/api/doctor", doctorRoutes);
 app.use("/api/appointments", appointmentRoutes);
+app.use("/api/schedule", scheduleRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/contact", contactRoutes);
 

@@ -10,6 +10,8 @@ import {
     getAppointmentDetails,
     cancelAppointment,
     updateAppointmentStatus,
+    addConsultationNotes,
+    getConsultationNotes,
 } from "../controllers/appointment.controller.js";
 
 import { getLiveQueueStatusForPatient } from "../controllers/queue.controller.js";
@@ -111,6 +113,24 @@ router.put(
     authenticatedApiRateLimiter,
     authorizeRoles("doctor", "admin"),
     updateAppointmentStatus
+);
+
+// Add consultation notes and complete appointment (doctor)
+router.put(
+    "/:appointmentId/consultation-notes",
+    protect,
+    authenticatedApiRateLimiter,
+    authorizeRoles("doctor"),
+    addConsultationNotes
+);
+
+// Get consultation notes (patient/doctor/admin)
+router.get(
+    "/:appointmentId/consultation-notes",
+    protect,
+    authenticatedApiRateLimiter,
+    authorizeRoles("patient", "doctor", "admin"),
+    getConsultationNotes
 );
 
 

@@ -131,6 +131,9 @@ export const verifyDoctorOtp = asyncHandler(async (req, res) => {
 
     await Doctor.create({
       user: doctorUser._id,
+      status: "inactive",
+      isAvailable: false,
+      verificationStatus: "pending",
     });
 
     await OtpRegistration.deleteOne({ email });
@@ -144,6 +147,75 @@ export const verifyDoctorOtp = asyncHandler(async (req, res) => {
         email: doctorUser.email,
         role: doctorUser.role,
       },
+    });
+});
+
+export const updateDoctorApprovalStatus = asyncHandler(async (req, res) => {
+    const { doctorId } = req.params;
+    const { action } = req.body;
+
+    const actionMap = {
+      approve: {
+        verificationStatus: "approved",
+        status: "active",
+        isAvailable: true,
+        message: "Doctor approved successfully",
+      },
+      reject: {
+        verificationStatus: "rejected",
+        status: "inactive",
+        isAvailable: false,
+        message: "Doctor rejected successfully",
+      },
+      suspend: {
+        verificationStatus: "suspended",
+        status: "inactive",
+        isAvailable: false,
+        message: "Doctor suspended successfully",
+      },
+      deactivate: {
+        status: "inactive",
+        isAvailable: false,
+        message: "Doctor deactivated successfully",
+      },
+      reactivate: {
+        verificationStatus: "approved",
+        status: "active",
+        isAvailable: true,
+        message: "Doctor reactivated successfully",
+      },
+    };
+
+    const updates = actionMap[action];
+    if (!updates) {
+      throw new ValidationError("Invalid action");
+    }
+
+    const updateFields = {
+      status: updates.status,
+      isAvailable: updates.isAvailable,
+    };
+
+    if (updates.verificationStatus) {
+      updateFields.verificationStatus = updates.verificationStatus;
+    }
+
+    const doctor = await Doctor.findByIdAndUpdate(
+      doctorId,
+      {
+        $set: updateFields,
+      },
+      { new: true, runValidators: true }
+    ).populate("user", "name email role");
+
+    if (!doctor) {
+      throw new NotFoundError("Doctor not found");
+    }
+
+    res.status(200).json({
+      success: true,
+      message: updates.message,
+      doctor,
     });
 });
 
@@ -233,6 +305,56 @@ export const getAllDoctors = asyncHandler(async (req, res) => {
       limit,
       pages: Math.ceil(total / limit),
       doctors: doctorsWithDetails,
+    });
+});
+
+export const generatePlatformReport = asyncHandler(async (req, res) => {
+    const [
+      totalDoctors,
+      pendingDoctors,
+      approvedDoctors,
+      suspendedDoctors,
+      totalPatients,
+      totalAppointments,
+      completedAppointments,
+      pendingAppointments,
+      cancelledAppointments,
+    ] = await Promise.all([
+      Doctor.countDocuments({}),
+      Doctor.countDocuments({ verificationStatus: "pending" }),
+      Doctor.countDocuments({
+        $or: [{ verificationStatus: "approved" }, { verificationStatus: { $exists: false } }],
+      }),
+      Doctor.countDocuments({ verificationStatus: "suspended" }),
+      Patient.countDocuments({}),
+      Appointment.countDocuments({}),
+      Appointment.countDocuments({ status: "completed" }),
+      Appointment.countDocuments({ status: "pending" }),
+      Appointment.countDocuments({ status: "cancelled" }),
+    ]);
+
+    const report = {
+      generatedAt: new Date(),
+      doctors: {
+        total: totalDoctors,
+        pending: pendingDoctors,
+        approved: approvedDoctors,
+        suspended: suspendedDoctors,
+      },
+      patients: {
+        total: totalPatients,
+      },
+      appointments: {
+        total: totalAppointments,
+        completed: completedAppointments,
+        pending: pendingAppointments,
+        cancelled: cancelledAppointments,
+      },
+    };
+
+    res.status(200).json({
+      success: true,
+      report,
     });
 });
 

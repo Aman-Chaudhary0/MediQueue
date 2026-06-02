@@ -132,19 +132,27 @@ const DoctorSelection = ({ selectedDoctorId, onSelectDoctor }) => {
           ref={scrollContainerRef}
           className='scrollbar-hide mb-6 flex max-h-128 flex-col gap-4 overflow-y-auto pr-1 sm:mb-8'
         >
-          {filteredDoctors.map((doctor) => (
+          {filteredDoctors.map((doctor) => {
+            const isBookable = doctor?.status === 'active' && doctor?.isAvailable !== false
+
+            return (
             <div
               key={doctor._id}
-              className={`flex cursor-pointer flex-col gap-4 rounded-lg border p-4 shadow-md transition hover:-translate-y-1 hover:shadow-lg sm:flex-row sm:items-center ${
+              className={`flex flex-col gap-4 rounded-lg border p-4 shadow-md transition sm:flex-row sm:items-center ${
+                isBookable ? 'cursor-pointer hover:-translate-y-1 hover:shadow-lg' : 'cursor-not-allowed opacity-60'
+              } ${
                 selectedDoctorId === doctor._id
                   ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                   : 'border-transparent bg-white'
               }`}
-              onClick={() => onSelectDoctor?.(doctor)}
+              onClick={() => {
+                if (isBookable) onSelectDoctor?.(doctor)
+              }}
               role='button'
-              tabIndex={0}
+              tabIndex={isBookable ? 0 : -1}
+              aria-disabled={!isBookable}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') onSelectDoctor?.(doctor)
+                if (isBookable && (e.key === 'Enter' || e.key === ' ')) onSelectDoctor?.(doctor)
               }}
             >
               {doctor?.profilePic ? (
@@ -175,8 +183,10 @@ const DoctorSelection = ({ selectedDoctorId, onSelectDoctor }) => {
                     </p>
                   </div>
 
-                  <p className='text-center text-xs font-medium capitalize text-blue-600 sm:text-right sm:text-sm'>
-                    {doctor?.status || 'active'}
+                  <p className={`text-center text-xs font-medium capitalize sm:text-right sm:text-sm ${
+                    isBookable ? 'text-blue-600' : 'text-red-600'
+                  }`}>
+                    {isBookable ? 'Available' : 'Unavailable'}
                   </p>
                 </div>
 
@@ -188,7 +198,7 @@ const DoctorSelection = ({ selectedDoctorId, onSelectDoctor }) => {
                 </div>
               </div>
             </div>
-          ))}
+          )})}
 
           {/* Loading indicator for more doctors */}
           {isLoadingMore && (

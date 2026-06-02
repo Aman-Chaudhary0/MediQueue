@@ -8,6 +8,8 @@ import {
   deleteUser,
   getAdminDashboardStats,
   getAdminAnalytics,
+  updateDoctorApprovalStatus,
+  generatePlatformReport,
 } from "../controllers/admin.controller.js";
 
 import { protect } from "../middlewares/auth.middleware.js";
@@ -69,6 +71,15 @@ router.delete(
   deleteUser
 );
 
+// Doctor approval/suspension workflow
+router.patch(
+  "/doctors/:doctorId/approval",
+  protect,
+  authenticatedApiRateLimiter,
+  authorizeRoles("admin"),
+  updateDoctorApprovalStatus
+);
+
 // Admin dashboard stats
 router.get(
   "/dashboard/stats",
@@ -85,6 +96,15 @@ router.get(
   authenticatedApiRateLimiter,
   authorizeRoles("admin"),
   getAdminAnalytics
+);
+
+// Platform report
+router.get(
+  "/reports/platform",
+  protect,
+  authenticatedApiRateLimiter,
+  authorizeRoles("admin"),
+  generatePlatformReport
 );
 
 export default router;
