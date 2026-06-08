@@ -4,38 +4,49 @@ const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
+      required: [true, "Name is required"],
+      trim: true,
+      minlength: [2, "Name must be at least 2 characters"],
+      maxlength: [100, "Name cannot exceed 100 characters"],
     },
 
     email: {
       type: String,
-      required: true,
+      required: [true, "Email is required"],
       unique: true,
+      index: true,
+      trim: true,
+      lowercase: true,
+      match: [/^\S+@\S+\.\S+$/, "Invalid email format"],
     },
 
     password: {
       type: String,
-      required: true,
+      required: [true, "Password is required"],
+      minlength: [6, "Password must be at least 6 characters"],
     },
 
     role: {
       type: String,
-      enum: ["admin", "doctor", "patient"],
+      enum: {
+        values: ["admin", "doctor", "patient"],
+        message: "Role must be admin, doctor, or patient",
+      },
       default: "patient",
     },
 
-    // Admin profile fields (optional; doctors/patients can ignore)
     phone: {
       type: String,
+      trim: true,
       default: "",
     },
 
     hospital: {
       type: String,
+      trim: true,
       default: "",
     },
 
-    // store image URL (ImageKit URL or any hosted URL)
     profilePic: {
       type: String,
       default: null,
@@ -44,6 +55,7 @@ const userSchema = new mongoose.Schema(
     failedLoginAttempts: {
       type: Number,
       default: 0,
+      min: [0, "Cannot be negative"],
     },
 
     lockUntil: {
@@ -54,6 +66,7 @@ const userSchema = new mongoose.Schema(
     suspiciousActivityCount: {
       type: Number,
       default: 0,
+      min: [0, "Cannot be negative"],
     },
 
     passwordResetToken: {

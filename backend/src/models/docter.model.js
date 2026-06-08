@@ -2,67 +2,60 @@ import mongoose from "mongoose";
 
 const doctorSchema = new mongoose.Schema(
   {
-    // Relation with User model
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: [true, "User reference is required"],
       unique: true,
+      index: true,
     },
-
-    // Professional Information
 
     specialization: {
       type: String,
-      required: false,
+      trim: true,
       default: "",
-      example: "Cardiologist, Neurologist, Pediatrician",
+      maxlength: [100, "Specialization cannot exceed 100 characters"],
+      index: true,
     },
 
     department: {
       type: String,
-      required: false,
+      trim: true,
       default: "",
-      example: "Cardiology, Neurology, Pediatrics",
+      maxlength: [100, "Department cannot exceed 100 characters"],
     },
 
     experience: {
       type: Number,
-      required: false,
       default: 0,
-      description: "Years of experience",
+      min: [0, "Experience cannot be negative"],
+      max: [60, "Experience cannot exceed 60 years"],
     },
 
     qualifications: {
       type: [String],
       default: [],
-      example: ["MBBS", "MD"],
     },
 
-
-    // Contact Information
     mobileNo: {
       type: String,
-      required: false,
+      trim: true,
       default: "",
     },
 
-    // Hospital/Clinic
     hospital: {
       type: String,
-      required: false,
+      trim: true,
       default: "",
+      maxlength: [200, "Hospital name cannot exceed 200 characters"],
     },
 
-    // Consultation Fee
     consultationFee: {
       type: Number,
-      required: false,
       default: 0,
-      description: "Fee in currency units",
+      min: [0, "Consultation fee cannot be negative"],
     },
 
-    // Profile
     profilePic: {
       type: String,
       default: null,
@@ -70,37 +63,47 @@ const doctorSchema = new mongoose.Schema(
 
     bio: {
       type: String,
+      trim: true,
       default: "",
+      maxlength: [1000, "Bio cannot exceed 1000 characters"],
     },
 
-    // Status
     status: {
       type: String,
-      enum: ["active", "inactive", "on-leave"],
+      enum: {
+        values: ["active", "inactive", "on-leave"],
+        message: "Status must be active, inactive, or on-leave",
+      },
       default: "active",
+      index: true,
     },
 
     verificationStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected", "suspended"],
+      enum: {
+        values: ["pending", "approved", "rejected", "suspended"],
+        message: "Verification status must be pending, approved, rejected, or suspended",
+      },
       default: "approved",
+      index: true,
     },
 
-    // Availability
     isAvailable: {
       type: Boolean,
       default: true,
     },
 
-
-    // Appointment count
     totalAppointments: {
       type: Number,
       default: 0,
+      min: [0, "Total appointments cannot be negative"],
     },
   },
   { timestamps: true }
 );
+
+// Compound index for filtering available approved doctors by specialization
+doctorSchema.index({ specialization: 1, verificationStatus: 1, isAvailable: 1 });
 
 const Doctor = mongoose.model("Doctor", doctorSchema);
 

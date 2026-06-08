@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState, useRef, useId } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Search, Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ManageDocNav from "../../components/adminComponents/ManageDocNav";
@@ -26,9 +26,8 @@ const ManageDoctors = () => {
   const [workflowError, setWorkflowError] = useState("");
   const [workflowSuccess, setWorkflowSuccess] = useState("");
 
-  // Fetch doctors with pagination and search
   const fetchDoctors = useCallback(
-    async (pageNum = 1, isSearching = false) => {
+    async (pageNum = 1) => {
       try {
         if (pageNum === 1) {
           setLoading(true);
@@ -37,9 +36,7 @@ const ManageDoctors = () => {
         }
         setError("");
 
-        let response;
-        response = await authService.getAdminDoctors(pageNum, 10, searchQuery);
-
+        const response = await authService.getAdminDoctors(pageNum, 10, searchQuery);
         const newDoctors = Array.isArray(response?.doctors) ? response.doctors : [];
 
         if (pageNum === 1) {
@@ -48,7 +45,6 @@ const ManageDoctors = () => {
           setDoctors((prev) => [...prev, ...newDoctors]);
         }
 
-        // Check if there are more pages
         const totalPages = response?.pages || 1;
         setHasMore(pageNum < totalPages);
         setPage(pageNum);
@@ -65,31 +61,22 @@ const ManageDoctors = () => {
     [searchQuery]
   );
 
-  // Initial load
   useEffect(() => {
     setPage(1);
     setDoctors([]);
     setHasMore(true);
-    fetchDoctors(1, true);
+    fetchDoctors(1);
   }, [searchQuery]);
 
-  // Handle search input with debounce
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchQuery(value);
-
-    // Clear existing timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    // Reset pagination on new search
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     setPage(1);
     setDoctors([]);
     setHasMore(true);
   };
 
-  // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -99,11 +86,7 @@ const ManageDoctors = () => {
       },
       { threshold: 0.1 }
     );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
+    if (observerTarget.current) observer.observe(observerTarget.current);
     return () => observer.disconnect();
   }, [hasMore, isLoadingMore, loading, page, fetchDoctors]);
 
@@ -146,12 +129,10 @@ const ManageDoctors = () => {
   const handleWorkflowAction = useCallback(
     async (doctorProfileId, action) => {
       if (!doctorProfileId) return;
-
       try {
         setWorkflowLoadingId(doctorProfileId);
         setWorkflowError("");
         setWorkflowSuccess("");
-
         const response = await authService.updateDoctorApprovalStatus(doctorProfileId, action);
         setWorkflowSuccess(response?.message || "Doctor status updated");
         setPage(1);
@@ -168,10 +149,12 @@ const ManageDoctors = () => {
 
   const cards = useMemo(() => {
     return doctors.map((d) => {
-      const statusRaw = d.status ?? d.user?.status ?? "active";
+      const statusRaw = d.doctorProfile?.status ?? d.status ?? "active";
       return {
         ...d,
         id: d._id,
+        doctorProfileId: d.doctorProfile?._id,
+        verificationStatus: d.doctorProfile?.verificationStatus ?? "approved",
         name: d.user?.name || d.name,
         email: d.user?.email || d.email,
         phone: d.mobileNo || d.phone,
@@ -191,7 +174,6 @@ const ManageDoctors = () => {
 
   return (
     <div className="mx-auto max-w-7xl p-4 sm:p-6">
-      {/* Back Button */}
       <div className="mb-4 flex items-center gap-2">
         <button
           onClick={() => navigate(-1)}
@@ -214,10 +196,7 @@ const ManageDoctors = () => {
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6 items-center justify-between">
         <div className="relative flex-1 w-full">
-          <Search
-            size={18}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-          />
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             placeholder="Search by name or speciality..."
@@ -245,6 +224,18 @@ const ManageDoctors = () => {
       {deleteError ? (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 text-center">
           {deleteError}
+        </div>
+      ) : null}
+
+      {workflowError ? (
+        <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 text-center">
+          {workflowError}
+        </div>
+      ) : null}
+
+      {workflowSuccess ? (
+        <div className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 text-center">
+          {workflowSuccess}
         </div>
       ) : null}
 
@@ -286,6 +277,8 @@ const ManageDoctors = () => {
                     onRequestDelete={() => handleDeleteRequest(doctor.id)}
                     onConfirmDelete={() => handleDeleteConfirm(doctor.id)}
                     onAbortDelete={handleDeleteAbort}
+                    onWorkflowAction={handleWorkflowAction}
+                    actionLoading={workflowLoadingId === doctor.doctorProfileId}
                   />
                 ))
               )}
@@ -313,31 +306,21 @@ const ManageDoctors = () => {
                 onRequestDelete={() => handleDeleteRequest(doctor.id)}
                 onConfirmDelete={() => handleDeleteConfirm(doctor.id)}
                 onAbortDelete={handleDeleteAbort}
+                onWorkflowAction={handleWorkflowAction}
+                actionLoading={workflowLoadingId === doctor.doctorProfileId}
               />
             ))
           )}
         </div>
 
-        {/* Infinite scroll trigger */}
         {hasMore && cards.length > 0 && (
           <div ref={observerTarget} className="py-6 text-center">
             {isLoadingMore && (
               <div className="text-sm text-gray-600">
                 <div className="inline-block animate-spin">
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                 </div>
                 <span className="ml-2">Loading more...</span>

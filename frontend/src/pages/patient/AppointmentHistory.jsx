@@ -96,9 +96,11 @@ const AppointmentHistory = () => {
                     ? 'Completed'
                     : normalizedStatus === 'cancelled'
                         ? 'Cancelled'
-                        : appointmentDate >= new Date()
-                            ? 'Upcoming'
-                            : 'Pending'
+                        : normalizedStatus === 'no-show'
+                            ? 'No Show'
+                            : appointmentDate >= new Date()
+                                ? 'Upcoming'
+                                : 'Pending'
 
             return {
                 id: appointment._id,
@@ -114,6 +116,7 @@ const AppointmentHistory = () => {
                 token: appointment?.tokenNumber || '--',
                 status: displayStatus,
                 photo: appointment?.doctor?.profilePic || '',
+                rating: appointment?.rating ?? null,
             }
         })
     }, [allAppointments])
@@ -142,6 +145,8 @@ const AppointmentHistory = () => {
                     stats.completed += 1
                 } else if (status === 'cancelled') {
                     stats.cancelled += 1
+                } else if (status === 'no-show') {
+                    stats.noShow += 1
                 } else if (appointmentDate >= now && (status === 'pending' || status === 'confirmed')) {
                     stats.upcoming += 1
                 }
@@ -153,6 +158,7 @@ const AppointmentHistory = () => {
                 completed: 0,
                 upcoming: 0,
                 cancelled: 0,
+                noShow: 0,
             }
         )
     }, [allAppointments])

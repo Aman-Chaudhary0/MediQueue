@@ -1,4 +1,4 @@
-import { Calendar, CheckCircle, Clock, FastForward, Phone, SkipForward, AlertTriangle, Pill, AlertCircle, Shield, FileText, ChevronDown, ChevronUp } from 'lucide-react'
+import { Calendar, CheckCircle, Clock, FastForward, Phone, SkipForward, AlertTriangle, Pill, AlertCircle, Shield, FileText, ChevronDown, ChevronUp, UserX } from 'lucide-react'
 import React, { useState } from 'react'
 
 const CurrentPatient = ({
@@ -11,6 +11,7 @@ const CurrentPatient = ({
     onMarkCompleted,
     onNextPatient,
     onSkipPatient,
+    onMarkNoShow,
 }) => {
     const [expandedSections, setExpandedSections] = useState({
         basic: true,
@@ -162,6 +163,16 @@ const CurrentPatient = ({
                     >
                         <SkipForward size={18} />
                         Skip Patient
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={onMarkNoShow}
+                        disabled={actionLoading}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-orange-400 px-4 py-2 text-orange-600 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                    >
+                        <UserX size={18} />
+                        Mark No-Show
                     </button>
                 </div>
             </div>

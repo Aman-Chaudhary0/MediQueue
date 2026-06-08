@@ -1,301 +1,217 @@
 import api from "./axiosConfig.js";
 
-// AUTH SERVICE
 const authService = {
-  // Register patient (OTP sent to email)
   registerPatient: async (name, email, password) => {
-    const response = await api.post("/auth/register", {
-      name,
-      email,
-      password,
-    });
+    const response = await api.post("/auth/register", { name, email, password });
     return response.data;
   },
 
-  // Verify OTP and finish registration (returns tokens)
   verifyOtp: async (email, otp) => {
-    const response = await api.post("/auth/verify-otp", {
-      email,
-      otp,
-    });
+    const response = await api.post("/auth/verify-otp", { email, otp });
     return response.data;
   },
 
   verifyDoctorOtp: async (email, otp) => {
-    const response = await api.post("/auth/verify-otp", {
-      email,
-      otp,
-    });
+    const response = await api.post("/auth/verify-otp", { email, otp });
     return response.data;
   },
 
-  // Login (patient, doctor, or admin)
   login: async (email, password) => {
-    const response = await api.post("/auth/login", {
-      email,
-      password,
-    });
+    const response = await api.post("/auth/login", { email, password });
     return response.data;
   },
 
-  // Forgot password - OTP based (replaces reset link flow)
   forgotPassword: async (email) => {
     const response = await api.post("/auth/forgot-password-otp", { email });
     return response.data;
   },
 
-  // Verify OTP and reset password
   verifyForgotPasswordOtp: async (email, otp, newPassword) => {
-    const response = await api.post("/auth/forgot-password-otp/verify", {
-      email,
-      otp,
-      newPassword,
-    });
+    const response = await api.post("/auth/forgot-password-otp/verify", { email, otp, newPassword });
     return response.data;
   },
 
   resetPassword: async (token, password) => {
-    const response = await api.post("/auth/reset-password", {
-      token,
-      password,
-    });
+    const response = await api.post("/auth/reset-password", { token, password });
     return response.data;
   },
-
-
 
   changePassword: async (currentPassword, newPassword) => {
-    const response = await api.post("/auth/change-password", {
-      currentPassword,
-      newPassword,
-    });
+    const response = await api.post("/auth/change-password", { currentPassword, newPassword });
     return response.data;
   },
 
-  // Logout
   logout: async () => {
     const response = await api.post("/auth/logout");
     return response.data;
   },
 
-  // Get current user profile (patient)
   getPatientProfile: async () => {
     const response = await api.get("/patient/me");
     return response.data;
   },
 
-  // Create patient record (after registration)
   createPatientRecord: async (age, mobileNo, gender, profilepic = "") => {
-    const response = await api.post("/patient", {
-      age,
-      mobileNo,
-      gender,
-      profilepic,
-    });
+    const response = await api.post("/patient", { age, mobileNo, gender, profilepic });
     return response.data;
   },
 
-  // Admin: Register doctor
   registerDoctor: async (name, email, password) => {
-    const response = await api.post("/admin/register-doctor", {
-      name,
-      email,
-      password,
-    });
+    const response = await api.post("/admin/register-doctor", { name, email, password });
     return response.data;
   },
 
   verifyDoctorRegistrationOtp: async (email, otp) => {
-    const response = await api.post("/admin/verify-doctor-otp", {
-      email,
-      otp,
-    });
+    const response = await api.post("/admin/verify-doctor-otp", { email, otp });
     return response.data;
   },
 
-  // Admin: Get all doctors
   getAllDoctors: async () => {
     const response = await api.get("/doctor");
     return response.data;
   },
 
-  // Appointments: Get available time slots for doctor and date
   getAvailableSlots: async (doctorId, date) => {
-    const response = await api.get("/appointments/available-slots", {
-      params: {
-        doctorId,
-        date,
-      },
-    });
+    const response = await api.get("/appointments/available-slots", { params: { doctorId, date } });
     return response.data;
   },
 
-  // Appointments: Book appointment
-  bookAppointment: async (
-    doctorId,
-    appointmentDate,
-    startTime,
-    endTime,
-    reason,
-    notes = ""
-  ) => {
+  bookAppointment: async (doctorId, appointmentDate, startTime, endTime, reason, notes = "") => {
     const response = await api.post("/appointments/book", {
-      doctorId,
-      appointmentDate,
-      startTime,
-      endTime,
-      reason,
-      notes,
+      doctorId, appointmentDate, startTime, endTime, reason, notes,
     });
     return response.data;
   },
 
-  // Appointments: Get patient appointments
   getPatientAppointments: async () => {
     const response = await api.get("/appointments/my-appointments");
     return response.data;
   },
 
-  // Appointments: Get doctor dashboard stats
   getDoctorAppointmentStats: async () => {
     const response = await api.get("/appointments/doctor/stats");
     return response.data;
   },
 
-  // Appointments: Get today's upcoming patients for doctor dashboard
   getDoctorUpcomingPatients: async () => {
     const response = await api.get("/appointments/doctor/upcoming-patients");
     return response.data;
   },
 
-  // Appointments: Get today's full schedule for doctor dashboard
   getDoctorTodaySchedule: async () => {
     const response = await api.get("/appointments/doctor/today-schedule");
     return response.data;
   },
 
-  // Appointments: Get single appointment details
   getAppointmentDetails: async (appointmentId) => {
     const response = await api.get(`/appointments/${appointmentId}`);
     return response.data;
   },
 
-  // Appointments: Update appointment status
   updateAppointmentStatus: async (appointmentId, status) => {
-    const response = await api.put(`/appointments/${appointmentId}/status`, {
-      status,
+    const response = await api.put(`/appointments/${appointmentId}/status`, { status });
+    return response.data;
+  },
+
+  addConsultationNotes: async (appointmentId, notesData) => {
+    const response = await api.put(`/appointments/${appointmentId}/consultation-notes`, notesData);
+    return response.data;
+  },
+
+  // Cancel appointment with optional reason
+  cancelAppointment: async (appointmentId, reason = "") => {
+    const response = await api.put(`/appointments/${appointmentId}/cancel`, { reason });
+    return response.data;
+  },
+
+  // Reschedule appointment to a new date/time slot
+  rescheduleAppointment: async (appointmentId, appointmentDate, startTime, endTime) => {
+    const response = await api.post(`/appointments/${appointmentId}/reschedule`, {
+      appointmentDate, startTime, endTime,
     });
     return response.data;
   },
 
-  // Appointments: Add consultation notes
-  addConsultationNotes: async (appointmentId, notesData) => {
-    const response = await api.put(
-      `/appointments/${appointmentId}/consultation-notes`,
-      notesData
-    );
+  // Mark appointment as no-show (doctor/admin)
+  markNoShow: async (appointmentId) => {
+    const response = await api.patch(`/appointments/${appointmentId}/no-show`);
     return response.data;
   },
 
-  // Appointments: Cancel appointment
-  cancelAppointment: async (appointmentId) => {
-    const response = await api.put(`/appointments/${appointmentId}/cancel`);
+  // Send appointment reminder email (admin)
+  sendAppointmentReminder: async (appointmentId) => {
+    const response = await api.post(`/appointments/${appointmentId}/reminder`);
     return response.data;
   },
 
-  // Live queue: get real-time queue status for current patient
+  // Submit rating and review after completed appointment (patient)
+  submitReview: async (appointmentId, rating, review) => {
+    const response = await api.post(`/appointments/${appointmentId}/review`, { rating, review });
+    return response.data;
+  },
+
   getLiveQueueStatus: async () => {
     const response = await api.get("/appointments/live-queue/status");
     return response.data;
   },
 
-  // Admin dashboard stats
   getAdminDashboardStats: async () => {
     const response = await api.get("/admin/dashboard/stats");
     return response.data;
   },
 
-  // Admin: doctors list with pagination and search
   getAdminDoctors: async (page = 1, limit = 10, search = "") => {
-    const response = await api.get("/admin/doctors", {
-      params: {
-        page,
-        limit,
-        search,
-      },
-    });
+    const response = await api.get("/admin/doctors", { params: { page, limit, search } });
     return response.data;
   },
 
-  // Search doctors by specialization, department, or hospital
   searchDoctors: async (query, page = 1, limit = 10) => {
-    const response = await api.get("/doctor/search", {
-      params: {
-        query,
-        page,
-        limit,
-      },
-    });
+    const response = await api.get("/doctor/search", { params: { query, page, limit } });
     return response.data;
   },
 
-  // Admin analytics (charts + cards)
   getAdminAnalytics: async () => {
     const response = await api.get("/admin/analytics");
     return response.data;
   },
 
-  // Admin: update doctor approval/status workflow
   updateDoctorApprovalStatus: async (doctorId, action) => {
-    const response = await api.patch(`/admin/doctors/${doctorId}/approval`, {
-      action,
-    });
+    const response = await api.patch(`/admin/doctors/${doctorId}/approval`, { action });
     return response.data;
   },
 
-  // Admin: generate platform report
   generatePlatformReport: async () => {
     const response = await api.get("/admin/reports/platform");
     return response.data;
   },
 
-  // Admin: delete user (admin deletes by userId)
   deleteUser: async (userId) => {
     const response = await api.delete(`/admin/users/${userId}`);
     return response.data;
   },
 
-  // Doctor: get current doctor profile
   getCurrentDoctorProfile: async () => {
     const response = await api.get("/doctor/me");
     return response.data;
   },
 
-  // Doctor schedule: get weekly schedule
   getDoctorSchedule: async () => {
     const response = await api.get("/schedule");
     return response.data;
   },
 
-  // Doctor schedule: set one day schedule
   setDoctorSchedule: async (scheduleData) => {
     const response = await api.post("/schedule", scheduleData);
     return response.data;
   },
 
-  // Doctor schedule: update consultation fee
   updateConsultationFee: async (consultationFee) => {
-    const response = await api.put("/schedule/fee/update", {
-      consultationFee,
-    });
+    const response = await api.put("/schedule/fee/update", { consultationFee });
     return response.data;
   },
 
-  // Doctor schedule: update availability
   updateDoctorAvailability: async (isAvailable) => {
-    const response = await api.put("/schedule/availability/update", {
-      isAvailable,
-    });
+    const response = await api.put("/schedule/availability/update", { isAvailable });
     return response.data;
   },
 };

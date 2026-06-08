@@ -27,6 +27,7 @@ const PatientProfile = () => {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({ fullName: '', mobileNo: '', age: '', emergencyPhone: '' });
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -144,37 +145,28 @@ const PatientProfile = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const validateProfileFields = () => {
+    const errors = {
+      fullName: !fullName?.trim() ? 'Full name is required' : fullName.trim().length < 2 ? 'Name must be at least 2 characters' : '',
+      mobileNo: !mobileNo?.trim() ? 'Mobile number is required' : !/^\+?[0-9\s()-]{7,20}$/.test(mobileNo.trim()) || mobileNo.replace(/\D/g,'').length < 10 ? 'Enter a valid mobile number' : '',
+      age: age !== '' && age != null ? (isNaN(age) || Number(age) < 0 || Number(age) > 150 ? 'Age must be between 0 and 150' : '') : '',
+      emergencyPhone: emergencyContact.phone?.trim() ? (!/^\+?[0-9\s()-]{7,20}$/.test(emergencyContact.phone) || emergencyContact.phone.replace(/\D/g,'').length < 10 ? 'Enter a valid phone number' : '') : '',
+    };
+    setFieldErrors(errors);
+    return errors;
+  };
+
   const handleSave = async () => {
+    const errors = validateProfileFields();
+    if (Object.values(errors).some(Boolean)) return;
+
     try {
       setSaving(true);
       setSaveError("");
       setSaveSuccess("");
 
-      // Validation
       if (!patientUserId) {
         throw new Error("Patient id not found. Please refresh and try again.");
-      }
-
-      if (!fullName?.trim()) {
-        throw new Error("Full name is required.");
-      }
-
-      if (!mobileNo?.trim()) {
-        throw new Error("Mobile number is required.");
-      }
-
-      // Validate age if provided
-      if (age && (isNaN(age) || age < 0 || age > 150)) {
-        throw new Error("Age must be a valid number between 0 and 150.");
-      }
-
-      // Validate emergency contact phone if provided
-      if (emergencyContact.phone && emergencyContact.phone.trim()) {
-        const phoneRegex = /^\+?[0-9\s()-]{7,20}$/;
-        const digitCount = emergencyContact.phone.replace(/\D/g, "").length;
-        if (!phoneRegex.test(emergencyContact.phone) || digitCount < 10 || digitCount > 15) {
-          throw new Error("Invalid emergency contact phone number.");
-        }
       }
 
       // Create update object
@@ -280,8 +272,8 @@ const PatientProfile = () => {
           )}
         </div>
 
-        {saveError ? <div className="mt-2 text-sm text-red-600">{saveError}</div> : null}
-        {saveSuccess ? <div className="mt-2 text-sm text-green-700">{saveSuccess}</div> : null}
+        {saveError ? <div className="mt-2 p-3 rounded-lg border border-red-300 bg-red-50 text-sm text-red-600">{saveError}</div> : null}
+        {saveSuccess ? <div className="mt-2 p-3 rounded-lg border border-green-300 bg-green-50 text-sm text-green-700">{saveSuccess}</div> : null}
       </div>
 
       {/* Main Card */}
@@ -334,9 +326,10 @@ const PatientProfile = () => {
             <input
               type="text"
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              onChange={(e) => { setFullName(e.target.value); setFieldErrors(p => ({...p, fullName:''})) }}
+              className={`w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.fullName ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {fieldErrors.fullName && <p className="mt-1 text-xs text-red-500">{fieldErrors.fullName}</p>}
           </div>
 
           {/* Age */}
@@ -345,9 +338,10 @@ const PatientProfile = () => {
             <input
               type="number"
               value={age}
-              onChange={(e) => setAge(e.target.value)}
-              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              onChange={(e) => { setAge(e.target.value); setFieldErrors(p => ({...p, age:''})) }}
+              className={`w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.age ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {fieldErrors.age && <p className="mt-1 text-xs text-red-500">{fieldErrors.age}</p>}
           </div>
 
           {/* Mobile */}
@@ -356,9 +350,10 @@ const PatientProfile = () => {
             <input
               type="text"
               value={mobileNo}
-              onChange={(e) => setMobileNo(e.target.value)}
-              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              onChange={(e) => { setMobileNo(e.target.value); setFieldErrors(p => ({...p, mobileNo:''})) }}
+              className={`w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.mobileNo ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {fieldErrors.mobileNo && <p className="mt-1 text-xs text-red-500">{fieldErrors.mobileNo}</p>}
           </div>
 
           {/* Gender */}
@@ -474,10 +469,11 @@ const PatientProfile = () => {
             <input
               type="text"
               value={emergencyContact.phone}
-              onChange={(e) => setEmergencyContact({ ...emergencyContact, phone: e.target.value })}
+              onChange={(e) => { setEmergencyContact({ ...emergencyContact, phone: e.target.value }); setFieldErrors(p => ({...p, emergencyPhone:''})) }}
               placeholder="Phone number"
-              className="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className={`w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none ${fieldErrors.emergencyPhone ? 'border-red-400' : 'border-gray-300'}`}
             />
+            {fieldErrors.emergencyPhone && <p className="mt-1 text-xs text-red-500">{fieldErrors.emergencyPhone}</p>}
           </div>
 
           {/* Insurance Details Section */}

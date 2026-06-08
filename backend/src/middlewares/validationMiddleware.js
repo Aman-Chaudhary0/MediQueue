@@ -375,3 +375,20 @@ export const validatePatientProfileInput = runValidation((req) => {
     }
   }
 });
+
+export const validateRescheduleInput = runValidation((req) => {
+  ensureRequiredString(req.body.appointmentDate, "appointmentDate is required");
+  ensureFutureOrTodayDate(req.body.appointmentDate);
+  ensureRequiredString(req.body.startTime, "startTime is required");
+  ensureRequiredString(req.body.endTime, "endTime is required");
+});
+
+export const validateReviewInput = runValidation((req) => {
+  const rating = Number(req.body.rating);
+  if (!req.body.rating || isNaN(rating) || rating < 1 || rating > 5) {
+    throw new ValidationError("Rating must be a number between 1 and 5");
+  }
+  if (req.body.review !== undefined && String(req.body.review).length > 1000) {
+    throw new ValidationError("Review cannot exceed 1000 characters");
+  }
+});

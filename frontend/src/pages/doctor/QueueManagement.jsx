@@ -167,6 +167,20 @@ const QueueManagement = () => {
         ])
     }
 
+    const handleMarkNoShow = async () => {
+        if (!currentAppointment) return
+        try {
+            setActionLoading(true)
+            setActionError('')
+            await authService.markNoShow(currentAppointment._id)
+            await fetchTodaySchedule()
+        } catch (err) {
+            setActionError(err?.response?.data?.message || 'Failed to mark no-show')
+        } finally {
+            setActionLoading(false)
+        }
+    }
+
 // ==========================================================================================================================================================================
 
     return (
@@ -198,6 +212,7 @@ const QueueManagement = () => {
                 onMarkCompleted={handleMarkCompleted}
                 onNextPatient={handleNextPatient}
                 onSkipPatient={handleSkipPatient}
+                onMarkNoShow={handleMarkNoShow}
             />
 
             <div className="bg-white shadow-lg rounded-2xl p-6 w-full">
