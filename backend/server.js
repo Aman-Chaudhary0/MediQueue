@@ -84,7 +84,7 @@ wss.on("connection", async (ws, req) => {
   }
 });
 
-server.listen(3000, () => {
+server.listen(process.env.PORT || 3000, () => {
   console.log("Server is running on port 3000");
   console.log("WebSocket server running at ws://localhost:3000/ws");
 });
