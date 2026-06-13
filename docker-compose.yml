@@ -1,0 +1,67 @@
+version: "3.9"
+
+services:
+  # ── MongoDB ────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: mediqueue_mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: mediqueue
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - mediqueue_net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend ────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mediqueue_backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file:
+      - ./backend/.env
+    environment:
+      # Override MONGO_URI to point to the mongo container
+      MONGO_URI: mongodb://mongo:27017/mediqueue
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost
+    ports:
+      - "3000:3000"
+    networks:
+      - mediqueue_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Frontend ───────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mediqueue_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    networks:
+      - mediqueue_net
+
+volumes:
+  mongo_data:
+
+networks:
+  mediqueue_net:
+    driver: bridge

@@ -42,6 +42,11 @@ app.use("/api/schedule", scheduleRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/contact", contactRoutes);
 
+// Health check endpoint (used by Docker healthcheck)
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 app.use(notFoundHandler);
 app.use(errorHandler);
 
