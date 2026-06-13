@@ -7,7 +7,7 @@ import {
 } from "./tokenStorage.js";
 
 // Create axios instance
-const API_BASE_URL = "http://localhost:3000/api";
+const API_BASE_URL =  "https://mediqueue-qhwi.onrender.com/api";
 let refreshPromise = null;
 
 const api = axios.create({

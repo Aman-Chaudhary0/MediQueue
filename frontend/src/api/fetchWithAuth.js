@@ -1,7 +1,7 @@
 import { getStoredAccessToken } from "./tokenStorage.js";
 import { refreshAccessToken } from "./axiosConfig.js";
 
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = "https://mediqueue-qhwi.onrender.com";
 
 const parseResponseBody = async (response) => {
   const contentType = response.headers.get("content-type") || "";
