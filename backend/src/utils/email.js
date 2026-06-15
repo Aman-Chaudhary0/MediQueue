@@ -14,13 +14,16 @@ function getTransporter() {
   console.log("Initializing Gmail transporter...");
   const googleUser = getEnvOrThrow("GOOGLE_USER");
   const appPassword = process.env.GMAIL_APP_PASSWORD || process.env.GMAIL_PASSWORD;
-  
+
   if (!appPassword) {
     throw new Error("Missing GMAIL_APP_PASSWORD or GMAIL_PASSWORD in .env");
   }
 
   transporter = nodemailer.createTransport({
     service: "gmail",
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
     auth: {
       user: googleUser,
       pass: appPassword,
