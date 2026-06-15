@@ -1,5 +1,4 @@
 import dotenv from "dotenv";
-
 dotenv.config();
 
 import http from "http";
@@ -15,7 +14,6 @@ const server = http.createServer(app);
 
 const wss = new WebSocketServer({ server, path: "/ws" });
 
-// Parse Bearer token from query string: ws://.../ws?token=...
 const getTokenFromUrl = (url) => {
   try {
     const parsed = new URL(url, "http://localhost");
@@ -27,15 +25,14 @@ const getTokenFromUrl = (url) => {
 
 const getAccessUserIdFromToken = (token) => {
   if (!token) return null;
-  const decoded = jwt.verify(token, process.env.JWT_SECRET);
-  return decoded?.id || null;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return decoded?.id || null;
+  } catch {
+    return null;
+  }
 };
 
-// Lazy queue computation by calling the existing REST logic
-// Note: we reuse Appointment/Patient logic by re-fetching via REST endpoint on the client side later.
-// For now, we will keep a backend-side poll by importing the controller directly would create tight coupling.
-// So instead: we compute queue state by reusing the same logic via direct DB calls in a tiny helper
-// that will call the controller code later if you want. For correctness now: trigger client to poll via fallback.
 const computeLiveQueuePlaceholder = () => ({ tick: true });
 
 wss.on("connection", async (ws, req) => {
@@ -59,24 +56,20 @@ wss.on("connection", async (ws, req) => {
       }
 
       if (msg?.type !== "subscribeLiveQueue") return;
-
-      // Start sending updates every 5 seconds
       if (ws._liveQueueTimer) return;
 
-      ws._liveQueueTimer = setInterval(async () => {
-        // We can’t call auth middleware from here, so we’ll use the same endpoint payload
-        // by computing queue state using the existing controller import is the next step.
-        // For now, send a ping to confirm subscription; the frontend will also be able to fallback.
-        ws.send(
-          JSON.stringify({
-            type: "liveQueue:update",
-            payload: computeLiveQueuePlaceholder(),
-          })
-        );
+      ws._liveQueueTimer = setInterval(() => {
+        if (ws.readyState === ws.OPEN) {
+          ws.send(JSON.stringify({ type: "liveQueue:update", payload: computeLiveQueuePlaceholder() }));
+        }
       }, 5000);
     });
 
     ws.on("close", () => {
+      if (ws._liveQueueTimer) clearInterval(ws._liveQueueTimer);
+    });
+
+    ws.on("error", () => {
       if (ws._liveQueueTimer) clearInterval(ws._liveQueueTimer);
     });
   } catch {
@@ -84,7 +77,17 @@ wss.on("connection", async (ws, req) => {
   }
 });
 
-server.listen(process.env.PORT || 3000, () => {
-  console.log("Server is running on port 3000");
-  console.log("WebSocket server running at ws://localhost:3000/ws");
+// Global safety nets — prevent process crash from unhandled rejections
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection:", reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err.message);
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+  console.log(`WebSocket server running at ws://localhost:${PORT}/ws`);
 });

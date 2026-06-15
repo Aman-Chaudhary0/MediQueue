@@ -1,7 +1,7 @@
 import { getStoredAccessToken } from "./tokenStorage.js";
 import { refreshAccessToken } from "./axiosConfig.js";
 
-const API_BASE_URL = "https://mediqueue-qhwi.onrender.com";
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000").replace(/\/api\/?$/, "");
 
 const parseResponseBody = async (response) => {
   const contentType = response.headers.get("content-type") || "";

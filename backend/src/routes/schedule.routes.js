@@ -13,44 +13,16 @@ import { authenticatedApiRateLimiter } from "../middlewares/authRateLimit.middle
 
 const router = express.Router();
 
-// Doctor routes - manage their own schedule
-router.post(
-  "/",
-  protect,
-  authenticatedApiRateLimiter,
-  authorizeRoles("doctor"),
-  setDoctorSchedule
-);
+// Doctor: manage own schedule
+router.post("/", protect, authenticatedApiRateLimiter, authorizeRoles("doctor"), setDoctorSchedule);
+router.get("/", protect, authenticatedApiRateLimiter, authorizeRoles("doctor"), getDoctorSchedule);
 
-router.get(
-  "/",
-  protect,
-  authenticatedApiRateLimiter,
-  authorizeRoles("doctor"),
-  getDoctorSchedule
-);
-
-// Public route - view doctor's schedule
-router.get("/:doctorId", getFullWeekSchedule);
-
-// Consultation fee routes
-router.put(
-  "/fee/update",
-  protect,
-  authenticatedApiRateLimiter,
-  authorizeRoles("doctor"),
-  updateConsultationFee
-);
-
+// IMPORTANT: specific string paths must come BEFORE /:doctorId
+router.put("/fee/update", protect, authenticatedApiRateLimiter, authorizeRoles("doctor"), updateConsultationFee);
+router.put("/availability/update", protect, authenticatedApiRateLimiter, authorizeRoles("doctor"), updateDoctorAvailability);
 router.get("/fee/:doctorId", getConsultationFee);
 
-// Availability status
-router.put(
-  "/availability/update",
-  protect,
-  authenticatedApiRateLimiter,
-  authorizeRoles("doctor"),
-  updateDoctorAvailability
-);
+// Param route last
+router.get("/:doctorId", getFullWeekSchedule);
 
 export default router;
