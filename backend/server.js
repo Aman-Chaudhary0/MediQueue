@@ -1,6 +1,7 @@
 import dns from "dns";
-
 dns.setDefaultResultOrder("ipv4first");
+console.log("DNS Order:", dns.getDefaultResultOrder());
+
 import dotenv from "dotenv";
 dotenv.config();
 
