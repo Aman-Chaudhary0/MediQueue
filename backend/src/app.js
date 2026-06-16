@@ -12,6 +12,7 @@ import uploadRoutes from "./routes/upload.routes.js";
 import contactRoutes from "./routes/contact.routes.js";
 import { errorHandler, notFoundHandler } from "./middlewares/errorMiddleware.js";
 import { sanitizeRequest } from "./middlewares/validationMiddleware.js";
+import { getTransporter } from "./utils/email.js";
 
 const app = express();
 
@@ -54,6 +55,24 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/schedule", scheduleRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/contact", contactRoutes);
+
+app.get("/smtp-test", async (req, res) => {
+  try {
+    const transport = getTransporter();
+    await transport.verify();
+
+    res.json({
+      success: true,
+      message: "SMTP connection successful",
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: err.message,
+      code: err.code,
+    });
+  }
+});
 
 app.use(notFoundHandler);
 app.use(errorHandler);
