@@ -16,7 +16,7 @@ function getEnvOrThrow(name) {
 
 let transporter = null;
 
-function getTransporter() {
+export function getTransporter() {
   if (transporter) return transporter;
 
   console.log("Initializing Gmail transporter...");
