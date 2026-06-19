@@ -120,27 +120,16 @@ const lockAccountForSuspiciousActivity = async (userId) => {
 };
 
 const issueAuthTokens = async (userId, res) => {
-  console.log("AUTH 1");
 
   const accessToken = generateAccessToken(userId);
 
-  console.log("AUTH 2");
-
   const refreshToken = generateRefreshToken(userId);
-
-  console.log("AUTH 3");
 
   await persistRefreshToken(userId, refreshToken);
 
-  console.log("AUTH 4");
-
   setAccessTokenCookie(res, accessToken);
 
-  console.log("AUTH 5");
-
   setRefreshTokenCookie(res, refreshToken);
-
-  console.log("AUTH 6");
 
   return { accessToken, refreshToken };
 };
@@ -200,14 +189,17 @@ export const register = asyncHandler(async (req, res) => {
     throw new ValidationError("Password is required");
   }
 
+  // Normalize email to lowercase
+  const normalizedEmail = email.toLowerCase().trim();
+
   // deny already registered users
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: normalizedEmail });
   if (existingUser) {
     throw new ConflictError("User already exists");
   }
 
   // Domain check: only send OTP if the domain has mail servers (MX records)
-  const ok = await hasMailServerForDomain(email);
+  const ok = await hasMailServerForDomain(normalizedEmail);
   if (!ok) {
     throw new ValidationError("Email domain not found. Please enter a valid email address.");
   }
@@ -221,9 +213,9 @@ export const register = asyncHandler(async (req, res) => {
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
   await OtpRegistration.findOneAndUpdate(
-    { email },
+    { email: normalizedEmail },
     {
-      email,
+      email: normalizedEmail,
       otpHash,
       name,
       passwordHash,
@@ -235,9 +227,9 @@ export const register = asyncHandler(async (req, res) => {
 
   // Send OTP email - blocking to catch errors
   try {
-    console.log(`Sending OTP to ${email}...`);
+    console.log(`Sending OTP to ${normalizedEmail}...`);
     await sendMail({
-      to: email,
+      to: normalizedEmail,
       subject: "Your MediQueue OTP",
       text: `Hi ${name},\n\nYour OTP for MediQueue registration is: ${otp}\n\nThis OTP will expire in 10 minutes.\n\n— MediQueue Team`,
       html: `
@@ -248,7 +240,7 @@ export const register = asyncHandler(async (req, res) => {
           <p style="color: #666; font-size: 12px;">— MediQueue Team</p>
         `,
     });
-    console.log(`✓ OTP email sent successfully to ${email}`);
+    console.log(`✓ OTP email sent successfully to ${normalizedEmail}`);
   } catch (emailError) {
     console.error(`✗ Email sending failed for ${email}:`, emailError);
     throw emailError;
@@ -372,62 +364,111 @@ export const verifyOtp = asyncHandler(async (req, res) => {
     throw new ValidationError("OTP is required");
   }
 
-  const otpRecord = await OtpRegistration.findOne({ email });
+  // Normalize email to lowercase
+  const normalizedEmail = email.toLowerCase().trim();
+
+  console.log(`\n📍 OTP verification attempt for: ${normalizedEmail}`);
+  console.log(`   Received OTP: "${otp}" (length: ${otp.length}, trimmed: "${otp.trim()}")`);
+
+  // Check if user already exists first (to avoid creating duplicate users)
+  const existingUser = await User.findOne({ email: normalizedEmail });
+  if (existingUser) {
+    console.log("❌ User already exists for email:", normalizedEmail);
+    // Clean up any orphaned OTP records
+    await OtpRegistration.deleteOne({ email: normalizedEmail });
+    throw new ConflictError("User already exists. Please log in.");
+  }
+
+  console.log("✓ User doesn't exist yet");
+
+  const otpRecord = await OtpRegistration.findOne({ email: normalizedEmail });
 
   // If OTP isn't in DB, treat it as "OTP not requested / invalid email / expired"
-  // (This avoids leaking account-existence info; client can still show a generic warning.)
   if (!otpRecord) {
-    throw new ValidationError("OTP not found or expired. Please click Verify again to resend OTP.");
+    console.error("❌ No OTP record found for email:", normalizedEmail);
+    throw new ValidationError("OTP not found or expired. Please request a new OTP.");
   }
+
+  console.log("✓ OTP record found in database");
 
   if (otpRecord.expiresAt.getTime() < Date.now()) {
-    throw new ValidationError("OTP expired. Please click Verify again to resend OTP.");
+    // Clean up expired OTP record
+    console.error("❌ OTP expired for email:", normalizedEmail);
+    await OtpRegistration.deleteOne({ email: normalizedEmail });
+    throw new ValidationError("OTP expired. Please request a new OTP.");
   }
 
-  const isOtpValid = compareOtp({ otp, otpHash: otpRecord.otpHash });
+  console.log("✓ OTP is not expired");
+
+  // Verify OTP - compareOtp now returns false instead of throwing on error
+  const isOtpValid = compareOtp({ otp: otp.trim(), otpHash: otpRecord.otpHash });
   if (!isOtpValid) {
-    throw new ValidationError("Invalid OTP");
+    console.error("❌ Invalid OTP for email:", normalizedEmail);
+    console.error("   User will need to request a new OTP");
+    throw new ValidationError("Invalid OTP. Please try again.");
   }
 
-  // create user based on the pending role
-  console.log("STEP 1: OTP validated");
+  console.log("✓ OTP is valid");
 
-  const user = await User.create({
-    name: otpRecord.name,
-    email,
-    password: otpRecord.passwordHash,
-    role: otpRecord.role,
-  });
+  try {
+    console.log("→ Creating user account...");
+    // Create user based on the pending role
+    const user = await User.create({
+      name: otpRecord.name,
+      email: normalizedEmail,
+      password: otpRecord.passwordHash,
+      role: otpRecord.role,
+    });
 
-  console.log("STEP 2: User created", user._id);
-  if (otpRecord.role === "doctor") {
-    await Doctor.create({ user: user._id });
-    console.log("STEP 3: Doctor profile created");
-  } else {
-    await Patient.create({ user: user._id });
-    console.log("STEP 3: Patient profile created");
+    console.log("✓ User created successfully:", user._id);
+
+    // Create associated profile
+    console.log("→ Creating user profile...");
+    if (otpRecord.role === "doctor") {
+      await Doctor.create({ user: user._id });
+      console.log("✓ Doctor profile created");
+    } else {
+      await Patient.create({ user: user._id });
+      console.log("✓ Patient profile created");
+    }
+
+    // Delete OTP record - IMPORTANT: must succeed before returning
+    console.log("→ Cleaning up OTP record...");
+    const deleteResult = await OtpRegistration.deleteOne({ email: normalizedEmail });
+    if (deleteResult.deletedCount === 0) {
+      console.warn("⚠️  OTP record deletion returned 0 - may indicate issue");
+    } else {
+      console.log("✓ OTP record deleted");
+    }
+
+    const { accessToken } = await issueAuthTokens(user._id, res);
+
+    console.log("✓ Registration complete for:", normalizedEmail);
+    console.log("✓ Access token generated");
+
+    return res.status(201).json({
+      success: true,
+      message: "OTP verified. Registration complete",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      accessToken,
+    });
+  } catch (error) {
+    // If user creation fails, clean up the OTP record to allow retry
+    console.error("❌ User/profile creation failed:", error.message);
+    console.error("   Error details:", error);
+    try {
+      const deleteResult = await OtpRegistration.deleteOne({ email: normalizedEmail });
+      console.log(`   Cleaned up OTP record (deleted: ${deleteResult.deletedCount})`);
+    } catch (deleteError) {
+      console.error("   Failed to clean up OTP:", deleteError.message);
+    }
+    throw error;
   }
-
-  await OtpRegistration.deleteOne({ email });
-  console.log("STEP 4: OTP record deleted");
-
-  console.log("STEP 5: Issuing auth tokens");
-  const { accessToken } = await issueAuthTokens(user._id, res);
-
-  console.log("STEP 6: Tokens issued");
-
-  console.log("STEP 7: Sending response");
-  return res.status(201).json({
-    success: true,
-    message: "OTP verified. Registration complete",
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
-    accessToken,
-  });
 });
 
 

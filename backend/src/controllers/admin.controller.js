@@ -20,7 +20,6 @@ const getDoctorVerificationUrl = (email) => {
 export const registerDoctor = asyncHandler(async (req, res) => {
     const { name, email, password } = req.body;
 
-
     // Validate required fields
     if (!name || !email || !password) {
       throw new ValidationError("Please provide name, email, and password");
@@ -30,8 +29,11 @@ export const registerDoctor = asyncHandler(async (req, res) => {
       throw new ValidationError("Invalid email address");
     }
 
+    // Normalize email to lowercase
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check existing user
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
 
     if (existingUser) {
       throw new ConflictError("User already exists");
@@ -45,9 +47,9 @@ export const registerDoctor = asyncHandler(async (req, res) => {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
     await OtpRegistration.findOneAndUpdate(
-      { email },
+      { email: normalizedEmail },
       {
-        email,
+        email: normalizedEmail,
         otpHash,
         name,
         passwordHash: hashedPassword,
@@ -57,11 +59,11 @@ export const registerDoctor = asyncHandler(async (req, res) => {
       { upsert: true, new: true }
     );
 
-    const verificationUrl = getDoctorVerificationUrl(email);
+    const verificationUrl = getDoctorVerificationUrl(normalizedEmail);
 
     // Send verification email asynchronously (non-blocking)
     sendMail({
-      to: email,
+      to: normalizedEmail,
       subject: "Verify your MediQueue doctor account",
       text: `Hello Dr. ${name},\n\nAn admin invited you to MediQueue. Your OTP is: ${otp}\n\nThis OTP expires in 10 minutes.\n\nComplete verification here: ${verificationUrl}\n\nIf you were not expecting this invitation, please ignore this email.`,
       html: `
@@ -79,7 +81,7 @@ export const registerDoctor = asyncHandler(async (req, res) => {
         </div>
       `,
     }).catch((emailError) => {
-      console.error(`Failed to send doctor verification email to ${email}:`, emailError.message);
+      console.error(`Failed to send doctor verification email to ${normalizedEmail}:`, emailError.message);
       // Log but don't block doctor registration
     });
 
@@ -88,7 +90,7 @@ export const registerDoctor = asyncHandler(async (req, res) => {
       message: "OTP sent successfully. Verify the doctor's email to complete doctor registration.",
       pendingDoctor: {
         name,
-        email,
+        email: normalizedEmail,
         role: "doctor",
       },
       verificationUrl,
@@ -102,12 +104,15 @@ export const verifyDoctorOtp = asyncHandler(async (req, res) => {
       throw new ValidationError("Email and OTP are required");
     }
 
-    const existingUser = await User.findOne({ email });
+    // Normalize email to lowercase
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       throw new ConflictError("User already exists");
     }
 
-    const otpRecord = await OtpRegistration.findOne({ email });
+    const otpRecord = await OtpRegistration.findOne({ email: normalizedEmail });
 
     if (!otpRecord || otpRecord.role !== "doctor") {
       throw new ValidationError("OTP not found or expired for this doctor invitation");
@@ -124,7 +129,7 @@ export const verifyDoctorOtp = asyncHandler(async (req, res) => {
 
     const doctorUser = await User.create({
       name: otpRecord.name,
-      email: otpRecord.email,
+      email: normalizedEmail,
       password: otpRecord.passwordHash,
       role: "doctor",
     });
@@ -136,7 +141,7 @@ export const verifyDoctorOtp = asyncHandler(async (req, res) => {
       verificationStatus: "pending",
     });
 
-    await OtpRegistration.deleteOne({ email });
+    await OtpRegistration.deleteOne({ email: normalizedEmail });
 
     res.status(201).json({
       success: true,

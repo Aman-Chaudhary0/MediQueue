@@ -27,8 +27,11 @@ export const sendForgotPasswordOtp = asyncHandler(async (req, res) => {
     throw new ValidationError("Invalid email address");
   }
 
+  // Normalize email to lowercase
+  const normalizedEmail = email.toLowerCase().trim();
+
   // Do not leak whether email exists
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: normalizedEmail });
 
   if (user) {
     const otp = generateNumericOtp({ digits: 6 });
@@ -36,9 +39,9 @@ export const sendForgotPasswordOtp = asyncHandler(async (req, res) => {
     const expiresAt = new Date(Date.now() + PASSWORD_RESET_OTP_TTL_MS);
 
     await OtpRegistration.findOneAndUpdate(
-      { email },
+      { email: normalizedEmail },
       {
-        email,
+        email: normalizedEmail,
         otpHash,
         name: user.name || "",
         passwordHash: user.password, // keep existing password hash
@@ -50,7 +53,7 @@ export const sendForgotPasswordOtp = asyncHandler(async (req, res) => {
 
     // Send OTP email asynchronously (non-blocking)
     sendMail({
-      to: email,
+      to: normalizedEmail,
       subject: "MediQueue password reset OTP",
       text: `Your MediQueue password reset OTP is: ${otp}\n\nThis OTP expires in 10 minutes.`,
       html: `
@@ -62,7 +65,7 @@ export const sendForgotPasswordOtp = asyncHandler(async (req, res) => {
         </div>
       `,
     }).catch((emailError) => {
-      console.error(`Failed to send password reset OTP to ${email}:`, emailError.message);
+      console.error(`Failed to send password reset OTP to ${normalizedEmail}:`, emailError.message);
       // Log but don't block password reset request
     });
   }
@@ -81,7 +84,10 @@ export const verifyForgotPasswordOtp = asyncHandler(async (req, res) => {
   if (!otp || typeof otp !== "string") throw new ValidationError("OTP is required");
   if (!newPassword || typeof newPassword !== "string") throw new ValidationError("New password is required");
 
-  const otpRecord = await OtpRegistration.findOne({ email });
+  // Normalize email to lowercase
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const otpRecord = await OtpRegistration.findOne({ email: normalizedEmail });
 
   if (!otpRecord) {
     throw new ValidationError("OTP not found or expired. Please request a new OTP.");
@@ -96,7 +102,7 @@ export const verifyForgotPasswordOtp = asyncHandler(async (req, res) => {
     throw new ValidationError("Invalid OTP");
   }
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user) {
     // Should not happen, but avoid leaking
     throw new ValidationError("OTP verification failed");
