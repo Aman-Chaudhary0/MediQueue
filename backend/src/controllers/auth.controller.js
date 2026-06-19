@@ -421,10 +421,24 @@ export const verifyOtp = asyncHandler(async (req, res) => {
           await Doctor.create({ user: existingUser._id });
         }
       } else {
-        const existingPatient = await Patient.findOne({ user: existingUser._id });
-        if (!existingPatient) {
-          await Patient.create({ user: existingUser._id });
-        }
+        await Patient.updateOne(
+          { user: existingUser._id },
+          {
+            $setOnInsert: {
+              user: existingUser._id,
+              age: 0,
+              mobileNo: "",
+              gender: "other",
+              profilepic: "",
+              medicalHistory: "",
+              allergies: "",
+              currentMedications: "",
+              emergencyContact: {},
+              insuranceDetails: {},
+            },
+          },
+          { upsert: true }
+        );
       }
 
       await OtpRegistration.deleteOne({ email: normalizedEmail }).catch(() => {});
@@ -470,7 +484,24 @@ export const verifyOtp = asyncHandler(async (req, res) => {
       await Doctor.create({ user: user._id });
       console.log("✓ Doctor profile created");
     } else {
-      await Patient.create({ user: user._id });
+      await Patient.updateOne(
+        { user: user._id },
+        {
+          $setOnInsert: {
+            user: user._id,
+            age: 0,
+            mobileNo: "",
+            gender: "other",
+            profilepic: "",
+            medicalHistory: "",
+            allergies: "",
+            currentMedications: "",
+            emergencyContact: {},
+            insuranceDetails: {},
+          },
+        },
+        { upsert: true }
+      );
       console.log("✓ Patient profile created");
     }
 
@@ -533,6 +564,61 @@ export const verifyOtp = asyncHandler(async (req, res) => {
           accessToken,
         });
       }
+    }
+
+    const recoveredUser = await User.findOne({ email: normalizedEmail });
+    if (recoveredUser) {
+      console.log("⚠️ User exists after a post-create error; reconciling patient profile and completing registration");
+
+      if (otpRecord.role === "doctor") {
+        await Doctor.updateOne(
+          { user: recoveredUser._id },
+          {
+            $setOnInsert: {
+              user: recoveredUser._id,
+              status: "inactive",
+              isAvailable: false,
+              verificationStatus: "pending",
+            },
+          },
+          { upsert: true }
+        );
+      } else {
+        await Patient.updateOne(
+          { user: recoveredUser._id },
+          {
+            $setOnInsert: {
+              user: recoveredUser._id,
+              age: 0,
+              mobileNo: "",
+              gender: "other",
+              profilepic: "",
+              medicalHistory: "",
+              allergies: "",
+              currentMedications: "",
+              emergencyContact: {},
+              insuranceDetails: {},
+            },
+          },
+          { upsert: true }
+        );
+      }
+
+      await OtpRegistration.deleteOne({ email: normalizedEmail }).catch(() => {});
+
+      const { accessToken } = await issueAuthTokens(recoveredUser._id, res);
+
+      return res.status(200).json({
+        success: true,
+        message: "OTP verified. Registration complete",
+        user: {
+          _id: recoveredUser._id,
+          name: recoveredUser.name,
+          email: recoveredUser.email,
+          role: recoveredUser.role,
+        },
+        accessToken,
+      });
     }
 
     // If user creation fails, clean up the OTP record to allow retry
