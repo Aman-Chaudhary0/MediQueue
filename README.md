@@ -8,13 +8,13 @@ A full-stack web application that digitizes hospital appointment booking and pat
 
 | Admin Dashboard | Manage Doctors | Analytics |
 |---|---|---|
-| ![Admin Dashboard](Project%20page%20images/admin%20dashboard.png) | ![Manage Doctors](Project%20page%20images/manage%20doctors.png) | ![Analytics](Project%20page%20images/manage%20profile.png) |
+| ![Patient Dashboard](gitAssets/medi-queue-nu.vercel.app_patient_dashboard.png) | ![Doctors Dashboard](gitAssets/medi-queue-nu.vercel.app_doctor_dashboard.png) | ![Analytics](gitAssets/medi-queue-nu.vercel.app_admin_analytics.png) |
 
 ---
 
 ## 🚀 Live Demo
 
-> Coming soon — deployment in progress (Render + Vercel + MongoDB Atlas)
+> https://medi-queue-nu.vercel.app
 
 ---
 
