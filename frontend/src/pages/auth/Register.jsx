@@ -101,6 +101,7 @@ const Login = () => {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault()
+    if (otpLoading) return
     setOtpError('')
     if (!otpValue.trim() || !/^\d{4,8}$/.test(otpValue.trim())) {
       setOtpError('Enter a valid 4–8 digit OTP')

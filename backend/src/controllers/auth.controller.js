@@ -410,6 +410,48 @@ export const verifyOtp = asyncHandler(async (req, res) => {
 
   console.log("✓ OTP is valid");
 
+  const createOrReturnExistingUser = async () => {
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      console.log("✓ User already exists after OTP verification; returning successful response");
+
+      if (otpRecord.role === "doctor") {
+        const existingDoctor = await Doctor.findOne({ user: existingUser._id });
+        if (!existingDoctor) {
+          await Doctor.create({ user: existingUser._id });
+        }
+      } else {
+        const existingPatient = await Patient.findOne({ user: existingUser._id });
+        if (!existingPatient) {
+          await Patient.create({ user: existingUser._id });
+        }
+      }
+
+      await OtpRegistration.deleteOne({ email: normalizedEmail }).catch(() => {});
+
+      const { accessToken } = await issueAuthTokens(existingUser._id, res);
+
+      return res.status(200).json({
+        success: true,
+        message: "OTP verified. Registration complete",
+        user: {
+          _id: existingUser._id,
+          name: existingUser.name,
+          email: existingUser.email,
+          role: existingUser.role,
+        },
+        accessToken,
+      });
+    }
+
+    return null;
+  };
+
+  const existingUserResponse = await createOrReturnExistingUser();
+  if (existingUserResponse) {
+    return;
+  }
+
   try {
     console.log("→ Creating user account...");
     // Create user based on the pending role
@@ -458,6 +500,41 @@ export const verifyOtp = asyncHandler(async (req, res) => {
       accessToken,
     });
   } catch (error) {
+    if (error?.code === 11000) {
+      console.log("⚠️ Duplicate user creation detected; returning existing account response");
+
+      const duplicateUser = await User.findOne({ email: normalizedEmail });
+      if (duplicateUser) {
+        if (otpRecord.role === "doctor") {
+          const existingDoctor = await Doctor.findOne({ user: duplicateUser._id });
+          if (!existingDoctor) {
+            await Doctor.create({ user: duplicateUser._id });
+          }
+        } else {
+          const existingPatient = await Patient.findOne({ user: duplicateUser._id });
+          if (!existingPatient) {
+            await Patient.create({ user: duplicateUser._id });
+          }
+        }
+
+        await OtpRegistration.deleteOne({ email: normalizedEmail }).catch(() => {});
+
+        const { accessToken } = await issueAuthTokens(duplicateUser._id, res);
+
+        return res.status(200).json({
+          success: true,
+          message: "OTP verified. Registration complete",
+          user: {
+            _id: duplicateUser._id,
+            name: duplicateUser.name,
+            email: duplicateUser.email,
+            role: duplicateUser.role,
+          },
+          accessToken,
+        });
+      }
+    }
+
     // If user creation fails, clean up the OTP record to allow retry
     console.error("❌ User/profile creation failed:", error.message);
     console.error("   Error details:", error);
