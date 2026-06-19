@@ -66,4 +66,4 @@ export function compareOtp({ otp, otpHash }) {
     return false;
   }
 }
-}
+
